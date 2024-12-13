@@ -1,15 +1,18 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:hedieaty/views/login_page.dart';
-import 'package:hedieaty/views/signup_page.dart';
-import 'services/local_db_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'views/add_friend_page.dart';
+import 'views/gift_details_page.dart';
 import 'views/welcome_page.dart';
+import 'views/login_page.dart';
+import 'views/signup_page.dart';
 import 'views/home_page.dart';
+import 'views/event_list_page.dart';
+import 'views/event_details_page.dart';
+import 'views/gift_list_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await LocalDbService.init(); // Initialize SQLite
+  await Firebase.initializeApp(); // Initialize Firebase
   runApp(HedieatyApp());
 }
 
@@ -17,14 +20,37 @@ class HedieatyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => WelcomePage(),
-        '/login': (context) => LoginPage(),
-        '/signup': (context) => SignupPage(),
-        '/home': (context) => HomePage(),
-      },
-    );
+        title: 'Hedieaty',
+        theme: ThemeData(
+          primarySwatch: Colors.purple,
+          scaffoldBackgroundColor: Colors.grey[100],
+        ),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => WelcomePage(),
+          '/login': (context) => LoginPage(),
+          '/signup': (context) => SignupPage(),
+          '/home': (context) => HomePage(),
+          '/add_friend': (context) => AddFriendPage(),
+          '/event_list': (context) => EventListPage(),
+          '/event_details': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>? ??
+                {};
+            return EventDetailsPage(arguments: args);
+          },
+          '/gift_list': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>? ??
+                {};
+            return GiftListPage(arguments: args);
+          },
+          '/gift_details': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>? ??
+                {};
+            return GiftDetailsPage(arguments: args);
+          },
+        });
   }
 }

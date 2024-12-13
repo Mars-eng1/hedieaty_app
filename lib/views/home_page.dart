@@ -163,7 +163,7 @@ class HomePage extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _controller.showAddFriendOptions(context),
+        onPressed: () => _controller.navigateToAddFriend(context),
         label: Text('Add Friend'),
         icon: Icon(Icons.person_add),
         backgroundColor: Colors.pinkAccent,
