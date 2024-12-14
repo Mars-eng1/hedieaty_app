@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import '../controllers/home_controller.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final HomeController _controller = HomeController();
+  late Future<List<Map<String, dynamic>>> _friendsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _friendsFuture = _controller.getFriends(); // Load friends on init
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,10 +37,13 @@ class HomePage extends StatelessWidget {
         ),
         title: Text(
           'Hedieaty',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         actions: [
-          // Notifications with Badge
           Stack(
             children: [
               IconButton(
@@ -47,7 +62,11 @@ class HomePage extends StatelessWidget {
                         backgroundColor: Colors.red,
                         child: Text(
                           snapshot.data!.toString(),
-                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       );
                     }
@@ -77,7 +96,11 @@ class HomePage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: TextField(
-              onChanged: _controller.searchFriends,
+              onChanged: (query) {
+                setState(() {
+                  _friendsFuture = _controller.searchFriends(query);
+                });
+              },
               decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search, color: Colors.grey),
                 hintText: 'Search friends...',
@@ -95,7 +118,7 @@ class HomePage extends StatelessWidget {
           // Friends List
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _controller.getFriends(),
+              future: _friendsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -104,25 +127,37 @@ class HomePage extends StatelessWidget {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(child: Text('No friends found.'));
                 }
+
                 final friends = snapshot.data!;
+
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   itemCount: friends.length,
                   itemBuilder: (context, index) {
                     final friend = friends[index];
                     return Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                       elevation: 5,
                       shadowColor: Colors.grey.withOpacity(0.3),
                       margin: const EdgeInsets.only(bottom: 15),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(15),
-                        onTap: () => _controller.navigateToFriendEvents(context, friend['id']),
+                        onTap: () => _controller.navigateToFriendEvents(
+                          context,
+                          friend['id'],
+                          friend['name'],
+                        ),
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Colors.purpleAccent, Colors.pinkAccent.withOpacity(0.7)],
+                              colors: [
+                                Colors.purpleAccent,
+                                Colors.pinkAccent.withOpacity(0.7)
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -130,19 +165,19 @@ class HomePage extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              // Profile Picture
                               CircleAvatar(
                                 radius: 30,
-                                backgroundImage: friend['profilePicture'] != null
+                                backgroundImage:
+                                friend['profilePicture'] != null
                                     ? NetworkImage(friend['profilePicture'])
                                     : null,
                                 child: friend['profilePicture'] == null
-                                    ? Icon(Icons.person, size: 30, color: Colors.grey)
+                                    ? Icon(Icons.person,
+                                    size: 30, color: Colors.grey)
                                     : null,
                                 backgroundColor: Colors.white,
                               ),
                               const SizedBox(width: 15),
-                              // Friend's Info
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,7 +192,8 @@ class HomePage extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 5),
                                     Text(
-                                      friend['upcomingEvents'] > 0
+                                      friend['upcomingEvents'] != null &&
+                                          friend['upcomingEvents'] > 0
                                           ? 'Upcoming Events: ${friend['upcomingEvents']}'
                                           : 'No Upcoming Events',
                                       style: TextStyle(color: Colors.white70),
@@ -165,16 +201,6 @@ class HomePage extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              // Indicator for Upcoming Events
-                              if (friend['upcomingEvents'] > 0)
-                                CircleAvatar(
-                                  backgroundColor: Colors.redAccent,
-                                  radius: 15,
-                                  child: Text(
-                                    friend['upcomingEvents'].toString(),
-                                    style: TextStyle(color: Colors.white, fontSize: 12),
-                                  ),
-                                ),
                             ],
                           ),
                         ),

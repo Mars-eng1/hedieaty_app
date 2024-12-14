@@ -35,29 +35,6 @@ class _AddFriendPageState extends State<AddFriendPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DropdownButtonFormField<String>(
-              value: _controller.selectedCountryCode,
-              decoration: InputDecoration(
-                labelText: 'Country Code',
-                filled: true,
-                fillColor: Colors.pinkAccent[50],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              items: _controller.countryCodes
-                  .map((code) => DropdownMenuItem(
-                value: code,
-                child: Text(code),
-              ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _controller.updateCountryCode(value);
-                });
-              },
-            ),
-            const SizedBox(height: 16),
             TextFormField(
               controller: _controller.phoneNumberController,
               decoration: InputDecoration(

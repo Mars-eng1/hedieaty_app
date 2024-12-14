@@ -1,52 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeController {
-  // Mock unread notifications count
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Get unread notifications count for the current user
   Future<int> getUnreadNotificationCount() async {
-    await Future.delayed(Duration(milliseconds: 500)); // Simulate a delay
-    return 3; // Mock unread notifications
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return 0;
+
+      final snapshot = await _firestore
+          .collection('notifications')
+          .where('userId', isEqualTo: currentUser.uid)
+          .where('isRead', isEqualTo: false)
+          .get();
+
+      return snapshot.size;
+    } catch (e) {
+      print('Error fetching unread notifications: $e');
+      return 0;
+    }
   }
 
-  // Navigate to Notifications Screen
+  // Fetch all friends
+  Future<List<Map<String, dynamic>>> getFriends() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return [];
+
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('friends')
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+  }
+
+  // Search friends
+  Future<List<Map<String, dynamic>>> searchFriends(String query) async {
+    final friends = await getFriends();
+    if (query.isEmpty) return friends;
+
+    return friends
+        .where((friend) =>
+    friend['name']?.toLowerCase().contains(query.toLowerCase()) ?? false)
+        .toList();
+  }
+
   void navigateToNotifications(BuildContext context) {
     Navigator.pushNamed(context, '/notifications');
   }
 
-  // Navigate to Event List Screen
   void navigateToEventList(BuildContext context) {
     Navigator.pushNamed(context, '/event_list');
   }
 
-  // Navigate to Create New Event Screen
   void navigateToCreateNewEvent(BuildContext context) {
     Navigator.pushNamed(context, '/event_details');
   }
 
-  // Navigate to Profile Screen
   void navigateToProfile(BuildContext context) {
     Navigator.pushNamed(context, '/profile');
   }
 
-  // Navigate to Friend's Events
-  void navigateToFriendEvents(BuildContext context, String friendId) {
-    Navigator.pushNamed(context, '/friend_events', arguments: {'friendId': friendId});
+  void navigateToFriendEvents(
+      BuildContext context, String friendId, String friendName) {
+    Navigator.pushNamed(
+      context,
+      '/friend_events',
+      arguments: {
+        'friendId': friendId,
+        'friendName': friendName,
+      },
+    );
   }
 
-  // Search Friends
-  void searchFriends(String query) {
-    print('Searching friends with query: $query');
-  }
-
-  // Fetch Friends List
-  Future<List<Map<String, dynamic>>> getFriends() async {
-    return [
-      {'id': '1', 'name': 'Alice Johnson', 'upcomingEvents': 2},
-      {'id': '2', 'name': 'Bob Smith', 'profilePicture': 'https://via.placeholder.com/150', 'upcomingEvents': 0},
-      {'id': '3', 'name': 'Charlie Brown', 'profilePicture': 'https://via.placeholder.com/150', 'upcomingEvents': 1},
-    ];
-  }
-
-  // Navigate to Add Friend Screen
   void navigateToAddFriend(BuildContext context) {
     Navigator.pushNamed(context, '/add_friend');
   }

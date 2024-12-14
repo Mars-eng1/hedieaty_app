@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'views/about_page.dart';
 import 'views/account_page.dart';
 import 'views/add_friend_page.dart';
+import 'views/friend_events_page.dart';
 import 'views/gift_details_page.dart';
 import 'views/my_gifts_page.dart';
 import 'views/notification_page.dart';
@@ -36,6 +37,9 @@ class HedieatyApp extends StatelessWidget {
           '/login': (context) => LoginPage(),
           '/signup': (context) => SignupPage(),
           '/home': (context) => HomePage(),
+          '/friend_events': (context) => FriendEventsPage(
+              arguments: ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>),
           '/notifications': (context) => NotificationPage(),
           '/profile': (context) => ProfilePage(),
           '/account': (context) {
