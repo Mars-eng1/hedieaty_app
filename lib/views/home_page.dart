@@ -28,9 +28,34 @@ class HomePage extends StatelessWidget {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications, color: Colors.white),
-            onPressed: () => _controller.navigateToNotifications(context),
+          // Notifications with Badge
+          Stack(
+            children: [
+              IconButton(
+                icon: Icon(Icons.notifications, color: Colors.white),
+                onPressed: () => _controller.navigateToNotifications(context),
+              ),
+              Positioned(
+                right: 6,
+                top: 6,
+                child: FutureBuilder<int>(
+                  future: _controller.getUnreadNotificationCount(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data! > 0) {
+                      return CircleAvatar(
+                        radius: 10,
+                        backgroundColor: Colors.red,
+                        child: Text(
+                          snapshot.data!.toString(),
+                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      );
+                    }
+                    return SizedBox.shrink();
+                  },
+                ),
+              ),
+            ],
           ),
           IconButton(
             icon: Icon(Icons.list, color: Colors.white),

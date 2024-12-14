@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
 class HomeController {
+  // Mock unread notifications count
+  Future<int> getUnreadNotificationCount() async {
+    await Future.delayed(Duration(milliseconds: 500)); // Simulate a delay
+    return 3; // Mock unread notifications
+  }
+
   // Navigate to Notifications Screen
   void navigateToNotifications(BuildContext context) {
     Navigator.pushNamed(context, '/notifications');
@@ -28,13 +34,11 @@ class HomeController {
 
   // Search Friends
   void searchFriends(String query) {
-    // Filter friends based on the query.
     print('Searching friends with query: $query');
   }
 
   // Fetch Friends List
   Future<List<Map<String, dynamic>>> getFriends() async {
-    // Return mock friends data for now.
     return [
       {'id': '1', 'name': 'Alice Johnson', 'upcomingEvents': 2},
       {'id': '2', 'name': 'Bob Smith', 'profilePicture': 'https://via.placeholder.com/150', 'upcomingEvents': 0},

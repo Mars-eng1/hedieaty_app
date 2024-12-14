@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'views/about_page.dart';
+import 'views/account_page.dart';
 import 'views/add_friend_page.dart';
 import 'views/gift_details_page.dart';
+import 'views/my_gifts_page.dart';
+import 'views/notification_page.dart';
+import 'views/profile_page.dart';
 import 'views/welcome_page.dart';
 import 'views/login_page.dart';
 import 'views/signup_page.dart';
@@ -31,6 +36,11 @@ class HedieatyApp extends StatelessWidget {
           '/login': (context) => LoginPage(),
           '/signup': (context) => SignupPage(),
           '/home': (context) => HomePage(),
+          '/notifications': (context) => NotificationPage(),
+          '/profile': (context) => ProfilePage(),
+          '/account': (context) => AccountPage(),
+          '/my_gifts': (context) => MyGiftsPage(),
+          '/about': (context) => AboutPage(),
           '/add_friend': (context) => AddFriendPage(),
           '/event_list': (context) => EventListPage(),
           '/event_details': (context) {
