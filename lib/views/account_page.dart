@@ -2,24 +2,51 @@ import 'package:flutter/material.dart';
 import '../controllers/account_controller.dart';
 
 class AccountPage extends StatefulWidget {
+  final Map<String, dynamic> arguments;
+
+  AccountPage({required this.arguments});
+
   @override
   _AccountPageState createState() => _AccountPageState();
 }
 
 class _AccountPageState extends State<AccountPage> {
-  final AccountController _controller = AccountController();
+  late final AccountController _controller;
+  bool _isLoading = true; // For showing a loading indicator while fetching data
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AccountController(userId: widget.arguments['userId']);
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      await _controller.loadUserData();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading user data: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool isSetup = widget.arguments['isSetup'] ?? false;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Account',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
+        title: Text(isSetup ? 'Complete Profile' : 'Account'),
         backgroundColor: Colors.pinkAccent,
       ),
-      body: Padding(
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator()) // Show loading spinner
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _controller.formKey,
@@ -36,14 +63,12 @@ class _AccountPageState extends State<AccountPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your first name';
-                  }
-                  return null;
-                },
+                validator: (value) => (value == null || value.isEmpty)
+                    ? 'First name is required'
+                    : null,
               ),
               const SizedBox(height: 16),
+
               // Last Name
               TextFormField(
                 controller: _controller.lastNameController,
@@ -55,17 +80,15 @@ class _AccountPageState extends State<AccountPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your last name';
-                  }
-                  return null;
-                },
+                validator: (value) => (value == null || value.isEmpty)
+                    ? 'Last name is required'
+                    : null,
               ),
               const SizedBox(height: 16),
+
               // Date of Birth
               TextFormField(
-                controller: _controller.dateOfBirthController,
+                controller: _controller.dobController,
                 decoration: InputDecoration(
                   labelText: 'Date of Birth',
                   filled: true,
@@ -76,17 +99,12 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 onTap: () => _controller.selectDate(context),
                 readOnly: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select your date of birth';
-                  }
-                  return null;
-                },
               ),
               const SizedBox(height: 16),
+
               // Gender
               DropdownButtonFormField<String>(
-                value: _controller.selectedGender,
+                value: _controller.gender,
                 decoration: InputDecoration(
                   labelText: 'Gender',
                   filled: true,
@@ -95,25 +113,18 @@ class _AccountPageState extends State<AccountPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                items: _controller.genders
+                items: ['Male', 'Female']
                     .map((gender) => DropdownMenuItem(
-                          value: gender,
-                          child: Text(gender),
-                        ))
+                  value: gender,
+                  child: Text(gender),
+                ))
                     .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _controller.selectedGender = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select your gender';
-                  }
-                  return null;
-                },
+                onChanged: (value) => setState(() {
+                  _controller.gender = value;
+                }),
               ),
               const SizedBox(height: 16),
+
               // Email
               TextFormField(
                 controller: _controller.emailController,
@@ -125,14 +136,10 @@ class _AccountPageState extends State<AccountPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || !value.contains('@')) {
-                    return 'Please enter a valid email address';
-                  }
-                  return null;
-                },
+                readOnly: true, // Email is not editable
               ),
               const SizedBox(height: 16),
+
               // Phone Number
               TextFormField(
                 controller: _controller.phoneNumberController,
@@ -145,17 +152,12 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
-                  }
-                  return null;
-                },
               ),
               const SizedBox(height: 16),
+
               // Country/Region
               DropdownButtonFormField<String>(
-                value: _controller.selectedCountry,
+                value: _controller.country,
                 decoration: InputDecoration(
                   labelText: 'Country/Region',
                   filled: true,
@@ -166,41 +168,28 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 items: _controller.countries
                     .map((country) => DropdownMenuItem(
-                          value: country,
-                          child: Text(country),
-                        ))
+                  value: country,
+                  child: Text(country),
+                ))
                     .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _controller.selectedCountry = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select your country/region';
-                  }
-                  return null;
-                },
+                onChanged: (value) => setState(() {
+                  _controller.country = value;
+                }),
               ),
               const SizedBox(height: 20),
+
               // Save Button
               ElevatedButton(
                 onPressed: () {
-                  if (_controller.saveAccountDetails(context)) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Account details saved!')),
-                    );
+                  if (_controller.formKey.currentState!.validate()) {
+                    _controller.saveUserData(context, isSetup);
                   }
                 },
-                child: Text(
-                  'Save',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+                child: Text(isSetup ? 'Complete Profile' : 'Save'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pinkAccent,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
               ),

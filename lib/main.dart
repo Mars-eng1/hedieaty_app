@@ -38,7 +38,11 @@ class HedieatyApp extends StatelessWidget {
           '/home': (context) => HomePage(),
           '/notifications': (context) => NotificationPage(),
           '/profile': (context) => ProfilePage(),
-          '/account': (context) => AccountPage(),
+          '/account': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments
+                as Map<String, dynamic>;
+            return AccountPage(arguments: args);
+          },
           '/my_gifts': (context) => MyGiftsPage(),
           '/about': (context) => AboutPage(),
           '/add_friend': (context) => AddFriendPage(),

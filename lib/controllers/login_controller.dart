@@ -1,35 +1,60 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> login(String email, String password, BuildContext context) async {
+  Future<void> login(
+      String email, String password, BuildContext context) async {
     try {
-      // Show loading indicator (this is now in the LoginPage itself, as a dialog)
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Center(child: CircularProgressIndicator());
+        },
+      );
 
-      // Firebase login
+      // Perform Firebase login
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Close the loading dialog once login is done
-      Navigator.of(context).pop();  // Close the loading dialog
+      // Close the loading dialog
+      Navigator.of(context).pop();
 
-      // Check if login is successful
-      if (userCredential.user != null) {
-        print("Login successful, navigating to Home page.");
-        // Navigate to Home page
-        Navigator.pushReplacementNamed(context, '/home');
+      // Get user ID
+      String userId = userCredential.user!.uid;
+
+      // Fetch user data from Firestore
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(userId).get();
+
+      if (!userDoc.exists) {
+        throw Exception("User data not found in Firestore.");
+      }
+
+      // Navigate based on user data completeness
+      Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+
+      if (userData['firstName'] == null || userData['lastName'] == null) {
+        // Incomplete profile - Navigate to Account Setup
+        Navigator.pushReplacementNamed(context, '/account',
+            arguments: {'userId': userId, 'isSetup': true});
       } else {
-        print("Login failed, user is null.");
+        // Complete profile - Navigate to Home
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
-      // Close the loading dialog if login fails
-      Navigator.of(context).pop();  // Close the loading dialog
+      // Close loading dialog if it was open
+      Navigator.of(context).pop();
 
       print("Login failed: $e");
+
       // Show error dialog
       showDialog(
         context: context,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../controllers/event_list_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class EventListPage extends StatefulWidget {
   @override
@@ -8,7 +9,32 @@ class EventListPage extends StatefulWidget {
 
 class _EventListPageState extends State<EventListPage> {
   final EventListController _controller = EventListController();
-  bool _isMyEvents = true;
+  bool _isMyEvents = true; // Toggle between "My Events" and "Other Events"
+  bool _isLoading = true; // Show loading indicator while fetching data
+  String userId = ''; // ID of the logged-in user
+
+  @override
+  void initState() {
+    super.initState();
+    userId = FirebaseAuth.instance.currentUser!.uid; // Get the logged-in user's ID
+    _loadEvents(); // Load "My Events" by default
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    if (_isMyEvents) {
+      await _controller.loadMyEvents(userId);
+    } else {
+      await _controller.loadOtherEvents(); // Placeholder logic for "Other Events"
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,14 +45,14 @@ class _EventListPageState extends State<EventListPage> {
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: Colors.pinkAccent,
-        leading: Icon(Icons.card_giftcard, color: Colors.black),
+        leading: Icon(Icons.card_giftcard, color: Colors.white),
         actions: [
           TextButton(
             onPressed: () {
               setState(() {
                 _isMyEvents = true;
-                _controller.loadMyEvents();
               });
+              _loadEvents(); // Reload "My Events"
             },
             child: Text(
               'My Events',
@@ -40,8 +66,8 @@ class _EventListPageState extends State<EventListPage> {
             onPressed: () {
               setState(() {
                 _isMyEvents = false;
-                _controller.loadOtherEvents();
               });
+              _loadEvents(); // Reload "Other Events"
             },
             child: Text(
               'Other Events',
@@ -53,7 +79,9 @@ class _EventListPageState extends State<EventListPage> {
           ),
         ],
       ),
-      body: Column(
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator()) // Loading Indicator
+          : Column(
         children: [
           // Filters
           Padding(
@@ -62,7 +90,11 @@ class _EventListPageState extends State<EventListPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
-                  onPressed: _controller.sortEventsByName,
+                  onPressed: () {
+                    setState(() {
+                      _controller.sortEventsByName();
+                    });
+                  },
                   child: Text(
                     'All',
                     style: TextStyle(color: Colors.white),
@@ -80,9 +112,9 @@ class _EventListPageState extends State<EventListPage> {
                   hint: Text('Category'),
                   items: _controller.categories
                       .map((category) => DropdownMenuItem(
-                            value: category,
-                            child: Text(category),
-                          ))
+                    value: category,
+                    child: Text(category),
+                  ))
                       .toList(),
                   onChanged: (value) {
                     if (value != null) {
@@ -98,9 +130,9 @@ class _EventListPageState extends State<EventListPage> {
                   hint: Text('Status'),
                   items: _controller.statuses
                       .map((status) => DropdownMenuItem(
-                            value: status,
-                            child: Text(status),
-                          ))
+                    value: status,
+                    child: Text(status),
+                  ))
                       .toList(),
                   onChanged: (value) {
                     if (value != null) {
@@ -115,7 +147,9 @@ class _EventListPageState extends State<EventListPage> {
           ),
           // Event List
           Expanded(
-            child: ListView.builder(
+            child: _controller.filteredEvents.isEmpty
+                ? Center(child: Text('No events found.'))
+                : ListView.builder(
               itemCount: _controller.filteredEvents.length,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemBuilder: (context, index) {
@@ -128,27 +162,31 @@ class _EventListPageState extends State<EventListPage> {
                   ),
                   child: ListTile(
                     title: Text(event['name']),
-                    subtitle: Text('${event['category']} | ${event['status']}'),
+                    subtitle: Text(
+                        '${event['category']} | ${event['status']}'),
                     trailing: _isMyEvents
                         ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit, color: Colors.blue[400]),
-                                onPressed: () =>
-                                    _controller.editEvent(context, event['id']),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete_forever_rounded,
-                                    color: Colors.red),
-                                onPressed: () => _controller.deleteEvent(
-                                    context, event['id']),
-                              ),
-                            ],
-                          )
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit,
+                              color: Colors.blue[400]),
+                          onPressed: () => _controller.editEvent(
+                              context, event['id']),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                              Icons.delete_forever_rounded,
+                              color: Colors.red),
+                          onPressed: () =>
+                              _controller.deleteEvent(
+                                  context, event['id']),
+                        ),
+                      ],
+                    )
                         : null,
-                    onTap: () =>
-                        _controller.navigateToGiftList(context, event['id']),
+                    onTap: () => _controller.navigateToGiftList(
+                        context, event['id']),
                   ),
                 );
               },

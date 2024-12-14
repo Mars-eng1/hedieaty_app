@@ -1,26 +1,8 @@
 import 'package:flutter/material.dart';
+import '../services/firestore_service.dart';
 
 class EventListController {
-  List<Map<String, dynamic>> allEvents = [
-    {
-      'id': '1',
-      'name': 'John\'s Birthday',
-      'category': 'Birthdays',
-      'status': 'Upcoming',
-    },
-    {
-      'id': '2',
-      'name': 'Alice\'s Wedding',
-      'category': 'Weddings',
-      'status': 'Past',
-    },
-    {
-      'id': '3',
-      'name': 'Graduation Party',
-      'category': 'Graduations',
-      'status': 'Current',
-    },
-  ];
+  final FirestoreService _firestoreService = FirestoreService();
 
   String? selectedCategory;
   String? selectedStatus;
@@ -36,21 +18,23 @@ class EventListController {
 
   final List<String> statuses = ['Upcoming', 'Past', 'Current'];
 
+  List<Map<String, dynamic>> allEvents = [];
   List<Map<String, dynamic>> filteredEvents = [];
 
-  EventListController() {
-    // Load all events initially
-    filteredEvents = List.from(allEvents);
+  // Fetch events for the logged-in user from Firestore
+  Future<void> loadMyEvents(String userId) async {
+    try {
+      allEvents = await _firestoreService.getUserEvents(userId);
+      filteredEvents = List.from(allEvents); // Initially show all events
+    } catch (e) {
+      print("Error loading user events: $e");
+    }
   }
 
-  void loadMyEvents() {
-    // Logic for loading "My Events" (currently same as allEvents for simplicity)
-    filteredEvents = List.from(allEvents);
-  }
-
-  void loadOtherEvents() {
-    // Logic for loading "Other Events" (mocking same data for simplicity)
-    filteredEvents = List.from(allEvents);
+  // Load other users' events if required (placeholder logic for now)
+  Future<void> loadOtherEvents() async {
+    // Logic for fetching "Other Events" from Firestore
+    print("Loading other users' events is not implemented yet.");
   }
 
   void filterByCategory(String category) {
@@ -78,17 +62,35 @@ class EventListController {
   }
 
   void navigateToCreateEvent(BuildContext context) {
-    Navigator.pushNamed(context, '/event_details', arguments: {'isEditing': false});
+    Navigator.pushNamed(
+      context,
+      '/event_details',
+      arguments: {'isEditing': false},
+    );
   }
 
   void editEvent(BuildContext context, String eventId) {
-    Navigator.pushNamed(context, '/event_details',
-        arguments: {'isEditing': true, 'eventId': eventId});
+    Navigator.pushNamed(
+      context,
+      '/event_details',
+      arguments: {'isEditing': true, 'eventId': eventId},
+    );
   }
 
-  void deleteEvent(BuildContext context, String eventId) {
-    // Logic to delete an event (mock for now)
-    print('Deleted event: $eventId');
+  Future<void> deleteEvent(BuildContext context, String eventId) async {
+    try {
+      await _firestoreService.deleteEvent(eventId);
+      allEvents.removeWhere((event) => event['id'] == eventId);
+      _applyFilters();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Event deleted successfully')),
+      );
+    } catch (e) {
+      print("Error deleting event: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete event')),
+      );
+    }
   }
 
   void navigateToGiftList(BuildContext context, String eventId) {
@@ -97,12 +99,13 @@ class EventListController {
       '/gift_list',
       arguments: {
         'eventId': eventId,
-        'isMyEvent': true, // Pass true or false based on whether it’s "My Events" or "Other Events"
+        'isMyEvent':
+        true, // Pass true or false based on whether it’s "My Events" or "Other Events"
       },
     );
   }
 
-  void navigateToHome(BuildContext context){
+  void navigateToHome(BuildContext context) {
     Navigator.pushNamed(context, '/home');
   }
 }
