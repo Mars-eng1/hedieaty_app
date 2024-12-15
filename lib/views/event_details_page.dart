@@ -16,7 +16,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.arguments['isEditing'] == true) {
+    final isEditing = widget.arguments['isEditing'] ?? false;
+    if (isEditing) {
       _controller.loadEvent(widget.arguments['eventId']);
     }
   }
@@ -27,7 +28,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       appBar: AppBar(
         title: Text(
           widget.arguments['isEditing'] == true ? 'Edit Event' : 'Create Event',
-          style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.pinkAccent,
       ),
@@ -49,9 +50,9 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                 ),
                 items: _controller.categories
                     .map((category) => DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        ))
+                  value: category,
+                  child: Text(category),
+                ))
                     .toList(),
                 onChanged: (value) => setState(() {
                   _controller.category = value;
@@ -68,9 +69,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter a name'
-                    : null,
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Please enter a name' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -85,9 +85,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                 ),
                 onTap: () => _controller.selectDate(context),
                 readOnly: true,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please select a date'
-                    : null,
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Please select a date' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -108,8 +107,9 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          if (_controller.saveEvent(context, widget.arguments['isEditing'])) {
+        onPressed: () async {
+          final isEditing = widget.arguments['isEditing'] ?? false;
+          if (await _controller.saveEvent(context, isEditing)) {
             Navigator.pop(context);
           }
         },

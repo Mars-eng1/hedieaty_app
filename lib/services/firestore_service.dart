@@ -21,6 +21,47 @@ class FirestoreService {
     }
   }
 
+  // Real-time stream of user events
+  Stream<List<Map<String, dynamic>>> getUserEventsStream(String userId) {
+    return _firestore
+        .collection('events')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id; // Add Firestore document ID to the data
+      return data;
+    }).toList());
+  }
+
+  // Real-time stream of friends' events
+  Stream<List<Map<String, dynamic>>> getFriendsEventsStream(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('friends')
+        .snapshots()
+        .asyncMap((friendsSnapshot) async {
+      final friendIds = friendsSnapshot.docs.map((doc) => doc.id).toList();
+
+      if (friendIds.isEmpty) return []; // No friends, no events
+
+      // Fetch events of all friends
+      final querySnapshots = await Future.wait(
+        friendIds.map((friendId) =>
+            _firestore.collection('events').where('userId', isEqualTo: friendId).get()),
+      );
+
+      return querySnapshots.expand((querySnapshot) {
+        return querySnapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id; // Add Firestore document ID to the data
+          return data;
+        });
+      }).toList();
+    });
+  }
+
   // Delete an event
   Future<void> deleteEvent(String eventId) async {
     try {

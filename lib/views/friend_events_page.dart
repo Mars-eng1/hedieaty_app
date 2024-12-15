@@ -12,26 +12,19 @@ class FriendEventsPage extends StatefulWidget {
 
 class _FriendEventsPageState extends State<FriendEventsPage> {
   final FriendEventsController _controller = FriendEventsController();
-  late Future<List<Map<String, dynamic>>> _eventsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    final friendId = widget.arguments['friendId'];
-    _eventsFuture = _controller.getFriendEvents(friendId);
-  }
 
   @override
   Widget build(BuildContext context) {
     final friendName = widget.arguments['friendName'] ?? 'Friend';
+    final friendId = widget.arguments['friendId'];
 
     return Scaffold(
       appBar: AppBar(
         title: Text('$friendName\'s Events'),
         backgroundColor: Colors.pinkAccent,
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _eventsFuture,
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _controller.getFriendEventsStream(friendId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());

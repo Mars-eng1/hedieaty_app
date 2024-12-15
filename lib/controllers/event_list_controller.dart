@@ -21,20 +21,14 @@ class EventListController {
   List<Map<String, dynamic>> allEvents = [];
   List<Map<String, dynamic>> filteredEvents = [];
 
-  // Fetch events for the logged-in user from Firestore
-  Future<void> loadMyEvents(String userId) async {
-    try {
-      allEvents = await _firestoreService.getUserEvents(userId);
-      filteredEvents = List.from(allEvents); // Initially show all events
-    } catch (e) {
-      print("Error loading user events: $e");
-    }
+  // Stream for "My Events"
+  Stream<List<Map<String, dynamic>>> getMyEventsStream(String userId) {
+    return _firestoreService.getUserEventsStream(userId);
   }
 
-  // Load other users' events if required (placeholder logic for now)
-  Future<void> loadOtherEvents() async {
-    // Logic for fetching "Other Events" from Firestore
-    print("Loading other users' events is not implemented yet.");
+  // Stream for "Other Events" (events created by friends)
+  Stream<List<Map<String, dynamic>>> getOtherEventsStream(String userId) {
+    return _firestoreService.getFriendsEventsStream(userId);
   }
 
   void filterByCategory(String category) {
@@ -99,8 +93,7 @@ class EventListController {
       '/gift_list',
       arguments: {
         'eventId': eventId,
-        'isMyEvent':
-        true, // Pass true or false based on whether it’s "My Events" or "Other Events"
+        'isMyEvent': true,
       },
     );
   }

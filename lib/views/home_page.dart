@@ -124,8 +124,7 @@ class _HomePageState extends State<HomePage> {
                   return Center(child: Text('No friends found.'));
                 }
 
-                final friends = _controller.filterFriends(snapshot.data!, _searchQuery);
-
+                final friends = snapshot.data!;
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   itemCount: friends.length,
@@ -151,7 +150,7 @@ class _HomePageState extends State<HomePage> {
                             gradient: LinearGradient(
                               colors: [
                                 Colors.purpleAccent,
-                                Colors.pinkAccent.withOpacity(0.7),
+                                Colors.pinkAccent.withOpacity(0.7)
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -204,6 +203,7 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
+
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
