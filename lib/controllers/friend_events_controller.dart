@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class FriendEventsController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -15,4 +16,17 @@ class FriendEventsController {
       return data;
     }).toList());
   }
+
+  // Navigate to the gift list page for a specific event
+  void navigateToGiftList(BuildContext context, String eventId, String eventName) {
+    Navigator.pushNamed(
+      context,
+      '/friend_gift_list',
+      arguments: {
+        'eventId': eventId,
+        'eventName': eventName,
+      },
+    );
+  }
+
 }

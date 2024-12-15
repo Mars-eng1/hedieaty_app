@@ -4,6 +4,7 @@ import 'views/about_page.dart';
 import 'views/account_page.dart';
 import 'views/add_friend_page.dart';
 import 'views/friend_events_page.dart';
+import 'views/friend_gift_list_page.dart';
 import 'views/gift_details_page.dart';
 import 'views/my_gifts_page.dart';
 import 'views/notification_page.dart';
@@ -40,6 +41,9 @@ class HedieatyApp extends StatelessWidget {
           '/friend_events': (context) => FriendEventsPage(
               arguments: ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>),
+          '/friend_gift_list': (context) => FriendGiftListPage(
+            arguments: ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>,
+          ),
           '/notifications': (context) => NotificationPage(),
           '/profile': (context) => ProfilePage(),
           '/account': (context) {
