@@ -34,10 +34,8 @@ class FirestoreService {
   Future<void> saveEvent(String eventId, Map<String, dynamic> eventData) async {
     try {
       if (eventId.isEmpty) {
-        // Add new event
         await _firestore.collection('events').add(eventData);
       } else {
-        // Update existing event
         await _firestore.collection('events').doc(eventId).set(eventData);
       }
     } catch (e) {
@@ -49,11 +47,7 @@ class FirestoreService {
   Future<Map<String, dynamic>?> getUser(String userId) async {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
-      if (userDoc.exists) {
-        return userDoc.data();
-      } else {
-        return null; // No user found
-      }
+      return userDoc.exists ? userDoc.data() : null;
     } catch (e) {
       throw Exception('Error fetching user data: $e');
     }
@@ -64,10 +58,29 @@ class FirestoreService {
     try {
       await _firestore.collection('users').doc(userId).set(
         userData,
-        SetOptions(merge: true), // Merge to avoid overwriting existing data
+        SetOptions(merge: true),
       );
     } catch (e) {
       throw Exception('Error saving user data: $e');
+    }
+  }
+
+  // Fetch friends of a user
+  Future<List<Map<String, dynamic>>> getFriends(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('friends')
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      throw Exception('Error fetching friends: $e');
     }
   }
 }

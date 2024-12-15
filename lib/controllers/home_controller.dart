@@ -5,7 +5,54 @@ import 'package:firebase_auth/firebase_auth.dart';
 class HomeController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Get unread notifications count for the current user
+  //Stream for unread notifications count
+  Stream<int> getUnreadNotificationCountStream() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return const Stream.empty();
+    }
+
+    return _firestore
+        .collection('notifications')
+        .where('userId', isEqualTo: currentUser.uid)
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) => snapshot.size);
+  }
+
+  // Stream to get friends in real-time
+  Stream<List<Map<String, dynamic>>> getFriendsStream() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return const Stream.empty();
+    }
+
+    return _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('friends')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
+
+  // Filter friends based on search query
+  List<Map<String, dynamic>> filterFriends(List<Map<String, dynamic>> friends, String query) {
+    if (query.isEmpty) {
+      return friends;
+    }
+
+    return friends
+        .where((friend) =>
+    friend['name']?.toLowerCase().contains(query.toLowerCase()) ?? false)
+        .toList();
+  }
+
   Future<int> getUnreadNotificationCount() async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
@@ -24,35 +71,6 @@ class HomeController {
     }
   }
 
-  // Fetch all friends
-  Future<List<Map<String, dynamic>>> getFriends() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return [];
-
-    final snapshot = await _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('friends')
-        .get();
-
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      data['id'] = doc.id;
-      return data;
-    }).toList();
-  }
-
-  // Search friends
-  Future<List<Map<String, dynamic>>> searchFriends(String query) async {
-    final friends = await getFriends();
-    if (query.isEmpty) return friends;
-
-    return friends
-        .where((friend) =>
-    friend['name']?.toLowerCase().contains(query.toLowerCase()) ?? false)
-        .toList();
-  }
-
   void navigateToNotifications(BuildContext context) {
     Navigator.pushNamed(context, '/notifications');
   }
@@ -69,15 +87,11 @@ class HomeController {
     Navigator.pushNamed(context, '/profile');
   }
 
-  void navigateToFriendEvents(
-      BuildContext context, String friendId, String friendName) {
+  void navigateToFriendEvents(BuildContext context, String friendId, String friendName) {
     Navigator.pushNamed(
       context,
       '/friend_events',
-      arguments: {
-        'friendId': friendId,
-        'friendName': friendName,
-      },
+      arguments: {'friendId': friendId, 'friendName': friendName},
     );
   }
 

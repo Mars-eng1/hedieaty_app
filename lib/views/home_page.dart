@@ -8,13 +8,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final HomeController _controller = HomeController();
-  late Future<List<Map<String, dynamic>>> _friendsFuture;
 
-  @override
-  void initState() {
-    super.initState();
-    _friendsFuture = _controller.getFriends(); // Load friends on init
-  }
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +39,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         actions: [
+          // Notifications Icon with Badge
           Stack(
             children: [
               IconButton(
@@ -53,8 +49,8 @@ class _HomePageState extends State<HomePage> {
               Positioned(
                 right: 6,
                 top: 6,
-                child: FutureBuilder<int>(
-                  future: _controller.getUnreadNotificationCount(),
+                child: StreamBuilder<int>(
+                  stream: _controller.getUnreadNotificationCountStream(),
                   builder: (context, snapshot) {
                     if (snapshot.hasData && snapshot.data! > 0) {
                       return CircleAvatar(
@@ -98,7 +94,7 @@ class _HomePageState extends State<HomePage> {
             child: TextField(
               onChanged: (query) {
                 setState(() {
-                  _friendsFuture = _controller.searchFriends(query);
+                  _searchQuery = query;
                 });
               },
               decoration: InputDecoration(
@@ -117,8 +113,8 @@ class _HomePageState extends State<HomePage> {
           ),
           // Friends List
           Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _friendsFuture,
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _controller.getFriendsStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -128,11 +124,10 @@ class _HomePageState extends State<HomePage> {
                   return Center(child: Text('No friends found.'));
                 }
 
-                final friends = snapshot.data!;
+                final friends = _controller.filterFriends(snapshot.data!, _searchQuery);
 
                 return ListView.builder(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   itemCount: friends.length,
                   itemBuilder: (context, index) {
                     final friend = friends[index];
@@ -148,7 +143,7 @@ class _HomePageState extends State<HomePage> {
                         onTap: () => _controller.navigateToFriendEvents(
                           context,
                           friend['id'],
-                          friend['name'],
+                          friend['name'] ?? 'Unknown',
                         ),
                         child: Container(
                           padding: const EdgeInsets.all(16),
@@ -156,7 +151,7 @@ class _HomePageState extends State<HomePage> {
                             gradient: LinearGradient(
                               colors: [
                                 Colors.purpleAccent,
-                                Colors.pinkAccent.withOpacity(0.7)
+                                Colors.pinkAccent.withOpacity(0.7),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -167,13 +162,11 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               CircleAvatar(
                                 radius: 30,
-                                backgroundImage:
-                                friend['profilePicture'] != null
+                                backgroundImage: friend['profilePicture'] != null && friend['profilePicture'].isNotEmpty
                                     ? NetworkImage(friend['profilePicture'])
                                     : null,
-                                child: friend['profilePicture'] == null
-                                    ? Icon(Icons.person,
-                                    size: 30, color: Colors.grey)
+                                child: friend['profilePicture'] == null || friend['profilePicture'].isEmpty
+                                    ? Icon(Icons.person, size: 30, color: Colors.grey)
                                     : null,
                                 backgroundColor: Colors.white,
                               ),
@@ -183,7 +176,7 @@ class _HomePageState extends State<HomePage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      friend['name'],
+                                      friend['name'] ?? 'Unknown',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,

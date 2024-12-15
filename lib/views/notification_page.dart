@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../controllers/notification_controller.dart';
 
@@ -18,8 +19,7 @@ class NotificationPage extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'Notifications',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ],
         ),
@@ -27,8 +27,8 @@ class NotificationPage extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _controller.getNotifications(),
+        child: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _controller.getNotificationsStream(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
@@ -37,6 +37,7 @@ class NotificationPage extends StatelessWidget {
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return Center(child: Text('No notifications.'));
             }
+
             final notifications = snapshot.data!;
             return ListView.builder(
               itemCount: notifications.length,
@@ -51,18 +52,17 @@ class NotificationPage extends StatelessWidget {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.pinkAccent[100],
-                      child: Icon(Icons.card_giftcard, color: Colors.white),
+                      child: Icon(Icons.notifications, color: Colors.white),
                     ),
                     title: Text(
-                      '${notification['friendName']} pledged a gift!',
+                      notification['title'] ?? 'Notification',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(
-                      'Gift: ${notification['giftName']} \n'
-                      'Event: ${notification['eventName']}',
-                    ),
+                    subtitle: Text(notification['message'] ?? ''),
                     trailing: Text(
-                      notification['time'],
+                      notification['timestamp'] != null
+                          ? _formatTimestamp(notification['timestamp'])
+                          : '',
                       style: TextStyle(color: Colors.grey),
                     ),
                   ),
@@ -73,11 +73,27 @@ class NotificationPage extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _controller.markAllAsRead,
-        label: Text('Mark All as Read', style: TextStyle(color: Colors.white),),
-        icon: Icon(Icons.mark_unread_chat_alt_rounded, color: Color(0xffffffff),),
+        onPressed: () async {
+          await _controller.markAllAsRead();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('All notifications marked as read!')),
+          );
+        },
+        label: Text(
+          'Mark All as Read',
+          style: TextStyle(color: Colors.white),
+        ),
+        icon: Icon(
+          Icons.mark_unread_chat_alt_rounded,
+          color: Colors.white,
+        ),
         backgroundColor: Colors.pinkAccent,
       ),
     );
+  }
+
+  String _formatTimestamp(Timestamp timestamp) {
+    final dateTime = timestamp.toDate();
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
   }
 }
