@@ -28,7 +28,23 @@ class GiftListController {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(gift['name']),
-        content: Text(gift['description'] ?? 'No description available'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Description: ${gift['description'] ?? 'No description available'}'),
+            const SizedBox(height: 8),
+            Text('Category: ${gift['category'] ?? 'Uncategorized'}'),
+            const SizedBox(height: 8),
+            Text('Link: ${gift['link'] ?? 'No link provided'}'),
+            const SizedBox(height: 8),
+            Text('Price: ${gift['price'] ?? 'N/A'}'),
+            const SizedBox(height: 8),
+            Text('Quantity: ${gift['quantity'] ?? 'N/A'}'),
+            const SizedBox(height: 8),
+            Text('Priority: ${gift['priority'] ?? 'N/A'}'),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
