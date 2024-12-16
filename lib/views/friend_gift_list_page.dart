@@ -49,14 +49,15 @@ class _FriendGiftListPageState extends State<FriendGiftListPage> {
                 ),
                 child: ListTile(
                   title: Text(gift['name']),
-                  subtitle: Text(gift['description'] ?? 'No description'),
+                  subtitle: Text(gift['category'] ?? 'No category provided'),
                   trailing: isAvailable
                       ? ElevatedButton(
                     onPressed: () =>
                         _controller.pledgeGift(context, eventId, gift['id']),
                     child: Text('Available'),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  ): isPledged
+                  )
+                      : isPledged
                       ? ElevatedButton(
                     onPressed: () => _controller.cancelPledge(
                         context, eventId, gift['id']),
@@ -70,7 +71,7 @@ class _FriendGiftListPageState extends State<FriendGiftListPage> {
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey),
                   ),
-                  onTap: () => _controller.showGiftDetails(context, gift),
+                  onTap: () => _controller.showGiftDetails(context, gift), // Updated popup
                 ),
               );
             },

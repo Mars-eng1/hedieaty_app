@@ -39,13 +39,24 @@ class FriendGiftListController {
     }
   }
 
-  // Show gift details in a popup
+  // Show gift details in a popup with all the fields
   void showGiftDetails(BuildContext context, Map<String, dynamic> gift) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(gift['name']),
-        content: Text(gift['description'] ?? 'No description available'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Category: ${gift['category'] ?? 'No category'}'),
+            Text('Description: ${gift['description'] ?? 'No description'}'),
+            Text('Link: ${gift['link'] ?? 'No link provided'}'),
+            Text('Price: ${gift['price'] ?? 'N/A'}'),
+            Text('Quantity: ${gift['quantity'] ?? 'N/A'}'),
+            Text('Priority: ${gift['priority'] ?? 'N/A'}'),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
