@@ -16,7 +16,7 @@ class _GiftListPageState extends State<GiftListPage> {
   @override
   Widget build(BuildContext context) {
     final eventId = widget.arguments['eventId'];
-    final eventName = widget.arguments['eventName'];
+    final eventName = widget.arguments['eventName'] ?? 'Event'; // Default title if eventName is null
 
     return Scaffold(
       appBar: AppBar(
