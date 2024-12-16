@@ -40,6 +40,7 @@ class _FriendGiftListPageState extends State<FriendGiftListPage> {
             itemBuilder: (context, index) {
               final gift = gifts[index];
               final isAvailable = gift['status'] == 'Available';
+              final isPledged = gift['status'] == 'Pledged';
 
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -55,11 +56,19 @@ class _FriendGiftListPageState extends State<FriendGiftListPage> {
                         _controller.pledgeGift(context, eventId, gift['id']),
                     child: Text('Available'),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  ): isPledged
+                      ? ElevatedButton(
+                    onPressed: () => _controller.cancelPledge(
+                        context, eventId, gift['id']),
+                    child: Text('Cancel Pledge'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red),
                   )
                       : ElevatedButton(
                     onPressed: null,
                     child: Text('Pledged'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey),
                   ),
                   onTap: () => _controller.showGiftDetails(context, gift),
                 ),

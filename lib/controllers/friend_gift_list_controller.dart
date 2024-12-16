@@ -24,6 +24,21 @@ class FriendGiftListController {
     }
   }
 
+  // Cancel a pledge
+  Future<void> cancelPledge(BuildContext context, String eventId, String giftId) async {
+    try {
+      await _firestoreService.updateGift(eventId, giftId, {'status': 'Available'});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pledge canceled successfully')),
+      );
+    } catch (e) {
+      print('Error canceling pledge: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error canceling pledge')),
+      );
+    }
+  }
+
   // Show gift details in a popup
   void showGiftDetails(BuildContext context, Map<String, dynamic> gift) {
     showDialog(
