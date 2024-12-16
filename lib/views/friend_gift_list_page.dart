@@ -20,7 +20,7 @@ class _FriendGiftListPageState extends State<FriendGiftListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('$eventName Gifts'),
+        title: Text('$eventName\'s Gifts'),
         backgroundColor: Colors.pinkAccent,
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
@@ -31,24 +31,37 @@ class _FriendGiftListPageState extends State<FriendGiftListPage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error loading gifts.'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No gifts associated yet.'));
+            return Center(child: Text('No gifts found.'));
           }
 
           final gifts = snapshot.data!;
           return ListView.builder(
             itemCount: gifts.length,
-            padding: const EdgeInsets.all(16.0),
             itemBuilder: (context, index) {
               final gift = gifts[index];
+              final isAvailable = gift['status'] == 'Available';
+
               return Card(
-                elevation: 4,
-                margin: const EdgeInsets.only(bottom: 10),
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: ListTile(
                   title: Text(gift['name']),
-                  subtitle: Text(gift['description'] ?? ''),
+                  subtitle: Text(gift['description'] ?? 'No description'),
+                  trailing: isAvailable
+                      ? ElevatedButton(
+                    onPressed: () =>
+                        _controller.pledgeGift(context, eventId, gift['id']),
+                    child: Text('Available'),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  )
+                      : ElevatedButton(
+                    onPressed: null,
+                    child: Text('Pledged'),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+                  ),
+                  onTap: () => _controller.showGiftDetails(context, gift),
                 ),
               );
             },

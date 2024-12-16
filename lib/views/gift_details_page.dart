@@ -17,7 +17,7 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
   void initState() {
     super.initState();
     if (widget.arguments['isEditing'] == true) {
-      _controller.loadGift(widget.arguments['giftId']);
+      _controller.loadGift(widget.arguments['eventId'], widget.arguments['giftId']);
     }
   }
 
@@ -25,10 +25,7 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.arguments['isEditing'] == true ? 'Edit Gift' : 'Add Gift',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: Text(widget.arguments['isEditing'] == true ? 'Edit Gift' : 'Add Gift'),
         backgroundColor: Colors.pinkAccent,
       ),
       body: Padding(
@@ -37,29 +34,6 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
           key: _controller.formKey,
           child: ListView(
             children: [
-              // Category Dropdown
-              DropdownButtonFormField<String>(
-                value: _controller.category,
-                decoration: InputDecoration(
-                  labelText: 'Category',
-                  filled: true,
-                  fillColor: Colors.pinkAccent[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                items: _controller.categories
-                    .map((category) => DropdownMenuItem(
-                  value: category,
-                  child: Text(category),
-                ))
-                    .toList(),
-                onChanged: (value) => setState(() {
-                  _controller.category = value;
-                }),
-              ),
-              const SizedBox(height: 16),
-              // Name Field
               TextFormField(
                 controller: _controller.nameController,
                 decoration: InputDecoration(
@@ -70,43 +44,9 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter a gift name'
-                    : null,
+                validator: (value) => value == null || value.isEmpty ? 'Please enter a name' : null,
               ),
               const SizedBox(height: 16),
-              // Status Field (Fixed to "Available")
-              TextFormField(
-                initialValue: 'Available',
-                decoration: InputDecoration(
-                  labelText: 'Status',
-                  filled: true,
-                  fillColor: Colors.pinkAccent[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                readOnly: true,
-              ),
-              const SizedBox(height: 16),
-              // Price Field
-              TextFormField(
-                controller: _controller.priceController,
-                decoration: InputDecoration(
-                  labelText: 'Price',
-                  filled: true,
-                  fillColor: Colors.pinkAccent[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter a price'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              // Description Field
               TextFormField(
                 controller: _controller.descriptionController,
                 decoration: InputDecoration(
@@ -116,55 +56,22 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  hintText: 'Add details of the gift...',
+                  hintText: 'Add gift details...',
                 ),
                 maxLines: 4,
               ),
-              const SizedBox(height: 16),
-              // Link Field
-              TextFormField(
-                controller: _controller.linkController,
-                decoration: InputDecoration(
-                  labelText: 'Gift Link',
-                  filled: true,
-                  fillColor: Colors.pinkAccent[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  hintText: 'Paste the gift link here...',
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Image Upload Button
-              ElevatedButton.icon(
-                onPressed: _controller.uploadImage,
-                icon: Icon(Icons.image, color: Colors.blueAccent,),
-                label: Text('Upload Image',style: TextStyle(color: Colors.white),),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pinkAccent,
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Display Selected Image (if any)
-              if (_controller.imagePath != null)
-                Image.network(
-                  _controller.imagePath!,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
             ],
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          if (_controller.saveGift(context, widget.arguments['isEditing'])) {
-            Navigator.pop(context);
-          }
+        onPressed: () async {
+          final success = await _controller.saveGift(context, widget.arguments['eventId'],
+              widget.arguments['isEditing'], widget.arguments['giftId']);
+          if (success) Navigator.pop(context);
         },
-        label: Text('Save',style: TextStyle(color: Colors.white),),
-        icon: Icon(Icons.check,color: Colors.white,),
+        label: Text('Save'),
+        icon: Icon(Icons.check),
         backgroundColor: Colors.pinkAccent,
       ),
     );

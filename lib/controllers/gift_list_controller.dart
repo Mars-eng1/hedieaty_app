@@ -1,80 +1,61 @@
 import 'package:flutter/material.dart';
+import '../services/firestore_service.dart';
 
 class GiftListController {
-  final String eventId;
-  final bool isMyEvent;
+  final FirestoreService _firestoreService = FirestoreService();
 
-  GiftListController({required this.eventId, required this.isMyEvent});
+  // Get gifts for a specific event (stream)
+  Stream<List<Map<String, dynamic>>> getEventGiftsStream(String eventId) {
+    return _firestoreService.getEventGiftsStream(eventId);
+  }
 
-  List<Map<String, dynamic>> allGifts = [];
-  List<Map<String, dynamic>> filteredGifts = [];
-
-  String? selectedCategory;
-  String? selectedStatus;
-
-  final List<String> categories = ['Electronics', 'Books', 'Fashion', 'Games', 'Toys', 'Other'];
-  final List<String> statuses = ['Available', 'Pledged'];
-
-  void loadGifts() {
-    // Mock data for gifts
-    allGifts = [
-      {
-        'id': '1',
-        'name': 'Smartphone',
-        'category': 'Electronics',
-        'status': 'Available',
-        'isPledged': false,
+  // Navigate to the Gift Details page (for creating or editing)
+  void navigateToGiftDetails(BuildContext context, String eventId, {String? giftId}) {
+    Navigator.pushNamed(
+      context,
+      '/gift_details',
+      arguments: {
+        'eventId': eventId,
+        'isEditing': giftId != null,
+        'giftId': giftId,
       },
-      {
-        'id': '2',
-        'name': 'Novel',
-        'category': 'Books',
-        'status': 'Pledged',
-        'isPledged': true,
-      },
-    ];
-    filteredGifts = List.from(allGifts);
+    );
   }
 
-  void filterByCategory(String category) {
-    selectedCategory = category;
-    _applyFilters();
+  // Show gift details in a popup
+  void showGiftDetails(BuildContext context, Map<String, dynamic> gift) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(gift['name']),
+        content: Text(gift['description'] ?? 'No description available'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
-  void filterByStatus(String status) {
-    selectedStatus = status;
-    _applyFilters();
+  // Delete a gift
+  Future<void> deleteGift(BuildContext context, String eventId, String giftId) async {
+    try {
+      await _firestoreService.deleteGift(eventId, giftId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gift deleted successfully')),
+      );
+    } catch (e) {
+      print('Error deleting gift: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting gift')),
+      );
+    }
   }
 
-  void sortGiftsByName() {
-    filteredGifts.sort((a, b) => a['name'].compareTo(b['name']));
-  }
-
-  void _applyFilters() {
-    filteredGifts = allGifts.where((gift) {
-      final matchesCategory = selectedCategory == null || gift['category'] == selectedCategory;
-      final matchesStatus = selectedStatus == null ||
-          (selectedStatus == 'Available' && !gift['isPledged']) ||
-          (selectedStatus == 'Pledged' && gift['isPledged']);
-      return matchesCategory && matchesStatus;
-    }).toList();
-  }
-
-  void navigateToCreateGift(BuildContext context) {
-    Navigator.pushNamed(context, '/gift_details', arguments: {'isEditing': false, 'eventId': eventId});
-  }
-
-  void editGift(BuildContext context, String giftId) {
-    Navigator.pushNamed(context, '/gift_details', arguments: {'isEditing': true, 'giftId': giftId});
-  }
-
-  void deleteGift(BuildContext context, String giftId) {
-    // Logic to delete a gift
-    print('Deleted gift: $giftId');
-  }
-
-  void togglePledgeStatus(Map<String, dynamic> gift) {
-    gift['isPledged'] = !gift['isPledged'];
-    loadGifts(); // Reload gifts to refresh the view
+  // Edit an existing gift
+  void editGift(BuildContext context, String eventId, String giftId) {
+    navigateToGiftDetails(context, eventId, giftId: giftId);
   }
 }

@@ -155,4 +155,40 @@ class FirestoreService {
       throw Exception('Error fetching friends: $e');
     }
   }
+
+  // Get gifts for a specific event (stream)
+  Stream<List<Map<String, dynamic>>> getEventGiftsStream(String eventId) {
+    return _firestore
+        .collection('events')
+        .doc(eventId)
+        .collection('gifts')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
+    }).toList());
+  }
+
+  // Add a new gift
+  Future<void> addGift(String eventId, Map<String, dynamic> giftData) async {
+    await _firestore.collection('events').doc(eventId).collection('gifts').add(giftData);
+  }
+
+  // Update an existing gift
+  Future<void> updateGift(String eventId, String giftId, Map<String, dynamic> giftData) async {
+    await _firestore.collection('events').doc(eventId).collection('gifts').doc(giftId).update(giftData);
+  }
+
+  // Delete a gift
+  Future<void> deleteGift(String eventId, String giftId) async {
+    await _firestore.collection('events').doc(eventId).collection('gifts').doc(giftId).delete();
+  }
+
+  // Fetch a single gift
+  Future<Map<String, dynamic>?> getGift(String eventId, String giftId) async {
+    final doc = await _firestore.collection('events').doc(eventId).collection('gifts').doc(giftId).get();
+    return doc.exists ? doc.data() : null;
+  }
+
 }

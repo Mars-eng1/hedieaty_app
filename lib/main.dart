@@ -41,9 +41,10 @@ class HedieatyApp extends StatelessWidget {
           '/friend_events': (context) => FriendEventsPage(
               arguments: ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>),
-          '/friend_gift_list': (context) => FriendGiftListPage(
-            arguments: ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>,
-          ),
+          '/friend_gift_list': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
+            return FriendGiftListPage(arguments: args);
+          },
           '/notifications': (context) => NotificationPage(),
           '/profile': (context) => ProfilePage(),
           '/account': (context) {
@@ -62,9 +63,7 @@ class HedieatyApp extends StatelessWidget {
             return EventDetailsPage(arguments: args);
           },
           '/gift_list': (context) {
-            final args = ModalRoute.of(context)?.settings.arguments
-                    as Map<String, dynamic>? ??
-                {};
+            final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
             return GiftListPage(arguments: args);
           },
           '/gift_details': (context) {
