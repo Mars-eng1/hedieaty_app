@@ -50,6 +50,14 @@ class _FriendEventsPageState extends State<FriendEventsPage> {
                   title: Text(event['name']),
                   subtitle: Text(
                       '${event['category']} | ${event['status']} | ${event['date']}'),
+                  trailing: IconButton(
+                    icon: Icon(Icons.info_outline, color: Colors.pinkAccent),
+                    onPressed: () => _showEventDescription(
+                      context,
+                      event['name'],
+                      event['description'] ?? 'No description available.',
+                    ),
+                  ),
                   onTap: () => _controller.navigateToGiftList(
                       context, event['id'], event['name']),
                 ),
@@ -60,4 +68,50 @@ class _FriendEventsPageState extends State<FriendEventsPage> {
       ),
     );
   }
+
+  // Show event description in a modal bottom sheet
+  void _showEventDescription(BuildContext context, String eventName, String description) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                eventName,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.pinkAccent,
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                description,
+                style: TextStyle(fontSize: 16),
+              ),
+              SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Close', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
+
