@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 
@@ -27,7 +28,35 @@ class EventListController {
 
   Future<void> deleteEvent(BuildContext context, String eventId) async {
     try {
+      final eventDoc =
+      await _firestoreService.getEventById(eventId); // Fetch event details
+      final createdBy = eventDoc['createdBy'];
+
+      // Delete the event
       await _firestoreService.deleteEvent(eventId);
+
+      // Decrement "upcomingEvents" count for the creator
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(createdBy)
+          .update({'upcomingEvents': FieldValue.increment(-1)});
+
+      // Decrement "upcomingEvents" count for friends
+      final friendsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(createdBy)
+          .collection('friends')
+          .get();
+
+      for (final friend in friendsSnapshot.docs) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(friend.id)
+            .collection('friends')
+            .doc(createdBy)
+            .update({'upcomingEvents': FieldValue.increment(-1)});
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Event deleted successfully')),
       );
@@ -38,6 +67,7 @@ class EventListController {
       );
     }
   }
+
 
   void navigateToGiftList(BuildContext context, String eventId) {
     Navigator.pushNamed(

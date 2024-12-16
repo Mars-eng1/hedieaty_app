@@ -52,6 +52,12 @@ class FirestoreService {
     }).toList());
   }
 
+  //Add a Helper to Fetch Event by ID
+  Future<Map<String, dynamic>> getEventById(String eventId) async {
+    final docSnapshot = await _firestore.collection('events').doc(eventId).get();
+    return docSnapshot.data() ?? {};
+  }
+
 // Helper function to check if two dates are the same day
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&

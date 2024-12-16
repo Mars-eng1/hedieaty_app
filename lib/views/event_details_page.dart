@@ -109,7 +109,9 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final isEditing = widget.arguments['isEditing'] ?? false;
-          if (await _controller.saveEvent(context, isEditing)) {
+          final eventId = widget.arguments['eventId']; // Pass the event ID for editing
+
+          if (await _controller.saveEvent(context, isEditing, eventId: eventId)) {
             Navigator.pop(context);
           }
         },

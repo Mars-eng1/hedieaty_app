@@ -50,9 +50,8 @@ class _FriendEventsPageState extends State<FriendEventsPage> {
                   title: Text(event['name']),
                   subtitle: Text(
                       '${event['category']} | ${event['status']} | ${event['date']}'),
-                  onTap: () {
-                    // Handle tap to navigate to event details
-                  },
+                  onTap: () => _controller.navigateToGiftList(
+                      context, event['id'], event['name']),
                 ),
               );
             },
