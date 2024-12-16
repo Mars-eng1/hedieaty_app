@@ -9,8 +9,7 @@ class EventListPage extends StatefulWidget {
 
 class _EventListPageState extends State<EventListPage> {
   final EventListController _controller = EventListController();
-  bool _isMyEvents = true; // Toggle between "My Events" and "Other Events"
-  String userId = ''; // ID of the logged-in user
+  late final String userId; // ID of the logged-in user
 
   @override
   void initState() {
@@ -22,47 +21,24 @@ class _EventListPageState extends State<EventListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Event List',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.card_giftcard, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              'My Events',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ],
         ),
         backgroundColor: Colors.pinkAccent,
-        leading: Icon(Icons.card_giftcard, color: Colors.white),
-        actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _isMyEvents = true;
-              });
-            },
-            child: Text(
-              'My Events',
-              style: TextStyle(
-                color: _isMyEvents ? Colors.white : Colors.white70,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _isMyEvents = false;
-              });
-            },
-            child: Text(
-              'Other Events',
-              style: TextStyle(
-                color: !_isMyEvents ? Colors.white : Colors.white70,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _isMyEvents
-            ? _controller.getMyEventsStream(userId)
-            : _controller.getOtherEventsStream(userId),
+        stream: _controller.getMyEventsStream(userId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -87,9 +63,8 @@ class _EventListPageState extends State<EventListPage> {
                 ),
                 child: ListTile(
                   title: Text(event['name']),
-                  subtitle: Text('${event['category']} | ${event['status']}'),
-                  trailing: _isMyEvents
-                      ? Row(
+                  subtitle: Text('${event['category']} | ${event['date']}'),
+                  trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
@@ -104,8 +79,7 @@ class _EventListPageState extends State<EventListPage> {
                             _controller.deleteEvent(context, event['id']),
                       ),
                     ],
-                  )
-                      : null,
+                  ),
                   onTap: () => _controller.navigateToGiftList(context, event['id']),
                 ),
               );
@@ -113,42 +87,17 @@ class _EventListPageState extends State<EventListPage> {
           );
         },
       ),
-      floatingActionButton: Row(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(30, 0, 10, 0),
-            child: FloatingActionButton.extended(
-              onPressed: () => _controller.navigateToHome(context),
-              label: Text(
-                'Home',
-                style: TextStyle(color: Colors.white),
-              ),
-              icon: Icon(
-                Icons.home_rounded,
-                color: Colors.white,
-              ),
-              backgroundColor: Colors.pinkAccent,
-              heroTag: 'homeFAB',
-            ),
-          ),
-          if (_isMyEvents)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 0, 25, 0),
-              child: FloatingActionButton.extended(
-                onPressed: () => _controller.navigateToCreateEvent(context),
-                label: Text(
-                  'Create Event',
-                  style: TextStyle(color: Colors.white),
-                ),
-                icon: Icon(
-                  Icons.add,
-                  color: Colors.white,
-                ),
-                backgroundColor: Colors.pinkAccent,
-                heroTag: 'createEventFAB',
-              ),
-            ),
-        ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _controller.navigateToCreateEvent(context),
+        label: Text(
+          'Create Event',
+          style: TextStyle(color: Colors.white),
+        ),
+        icon: Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
+        backgroundColor: Colors.pinkAccent,
       ),
     );
   }

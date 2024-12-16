@@ -45,39 +45,46 @@ class EventDetailsController {
       return false;
     }
 
-    final eventData = {
-      'name': nameController.text,
-      'category': category,
-      'date': dateController.text,
-      'description': descriptionController.text,
-      'createdBy': currentUser.uid,
-      'createdByName': currentUser.displayName ?? 'Unknown User',
-      'timestamp': FieldValue.serverTimestamp(),
-    };
-
     try {
+      // Fetch user data to get firstName and lastName
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+
+      final userData = userDoc.data();
+      final createdByName =
+          "${userData?['firstName'] ?? 'Unknown'} ${userData?['lastName'] ?? 'User'}";
+
+      // Event data
+      final eventData = {
+        'name': nameController.text,
+        'category': category,
+        'date': dateController.text,
+        'description': descriptionController.text,
+        'createdBy': currentUser.uid,
+        'createdByName': createdByName, // Use fetched name
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+
       if (isEditing) {
         // Update the existing event
-        final eventId = nameController.text; // Replace with actual `eventId`
         await FirebaseFirestore.instance
             .collection('events')
-            .doc(eventId)
+            .doc(nameController.text) // Replace with event ID
             .update(eventData);
-
-        print('Event updated: $eventId');
       } else {
         // Create a new event
-        final newEventRef = await FirebaseFirestore.instance
-            .collection('events')
-            .add(eventData);
+        final newEventRef =
+        await FirebaseFirestore.instance.collection('events').add(eventData);
 
-        // Increment the "upcomingEvents" count for the current user
+        // Increment "upcomingEvents" count for the user
         await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
             .update({'upcomingEvents': FieldValue.increment(1)});
 
-        // Update "upcomingEvents" for each friend and notify them
+        // Notify friends about the new event
         final friendsSnapshot = await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
@@ -85,22 +92,11 @@ class EventDetailsController {
             .get();
 
         for (final friend in friendsSnapshot.docs) {
-          // Update the friend's record in the "friends" subcollection
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(friend.id)
-              .collection('friends')
-              .doc(currentUser.uid)
-              .update({
-            'upcomingEvents': FieldValue.increment(1),
-          });
-
-          // Add a notification for the friend
           await FirebaseFirestore.instance.collection('notifications').add({
             'userId': friend.id,
             'title': 'New Event Created',
             'message':
-            '${currentUser.displayName ?? "A friend"} created an event: ${nameController.text}',
+            '$createdByName created an event: ${nameController.text}',
             'isRead': false,
             'timestamp': FieldValue.serverTimestamp(),
           });
@@ -108,7 +104,6 @@ class EventDetailsController {
 
         print('New event created: ${newEventRef.id}');
       }
-
       return true;
     } catch (e) {
       print('Error saving event: $e');
@@ -118,6 +113,7 @@ class EventDetailsController {
       return false;
     }
   }
+
 
 
 
