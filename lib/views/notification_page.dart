@@ -15,11 +15,13 @@ class NotificationPage extends StatelessWidget {
         ),
         title: Row(
           children: [
-            Icon(Icons.notifications_active_rounded, color: Colors.yellow, size: 24),
+            Icon(Icons.notifications_active_rounded,
+                color: Colors.yellow, size: 24),
             const SizedBox(width: 8),
             Text(
               'Notifications',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ],
         ),
@@ -72,22 +74,35 @@ class NotificationPage extends StatelessWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await _controller.markAllAsRead();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('All notifications marked as read!')),
-          );
+      floatingActionButton: PopupMenuButton<String>(
+        onSelected: (value) async {
+          if (value == 'markAsRead') {
+            await _controller.markAllAsRead();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('All notifications marked as read!')),
+            );
+          } else if (value == 'settings') {
+            _controller.navigateToSettings(context);
+          }
         },
-        label: Text(
-          'Mark All as Read',
-          style: TextStyle(color: Colors.white),
-        ),
-        icon: Icon(
-          Icons.mark_unread_chat_alt_rounded,
-          color: Colors.white,
-        ),
-        backgroundColor: Colors.pinkAccent,
+        icon: Icon(Icons.settings, color: Colors.pinkAccent),
+        itemBuilder: (context) => [
+          PopupMenuItem(
+            value: 'markAsRead',
+            child: ListTile(
+              leading: Icon(Icons.mark_unread_chat_alt_rounded,
+                  color: Colors.pinkAccent),
+              title: Text('Mark All as Read'),
+            ),
+          ),
+          PopupMenuItem(
+            value: 'settings',
+            child: ListTile(
+              leading: Icon(Icons.settings, color: Colors.pinkAccent),
+              title: Text('Settings'),
+            ),
+          ),
+        ],
       ),
     );
   }

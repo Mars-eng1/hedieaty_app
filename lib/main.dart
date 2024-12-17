@@ -9,6 +9,7 @@ import 'views/gift_details_page.dart';
 import 'views/my_gifts_page.dart';
 import 'views/notification_page.dart';
 import 'views/profile_page.dart';
+import 'views/settings_page.dart';
 import 'views/welcome_page.dart';
 import 'views/login_page.dart';
 import 'views/signup_page.dart';
@@ -53,6 +54,7 @@ class HedieatyApp extends StatelessWidget {
             return AccountPage(arguments: args);
           },
           '/my_gifts': (context) => MyGiftsPage(),
+          '/settings': (context) => SettingsPage(),
           '/about': (context) => AboutPage(),
           '/add_friend': (context) => AddFriendPage(),
           '/event_list': (context) => EventListPage(),

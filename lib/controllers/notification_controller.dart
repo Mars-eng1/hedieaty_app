@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class NotificationController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -59,5 +60,9 @@ class NotificationController {
     }
 
     await batch.commit();
+  }
+
+  void navigateToSettings(BuildContext context) {
+    Navigator.pushNamed(context, '/settings');
   }
 }

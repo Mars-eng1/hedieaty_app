@@ -162,6 +162,13 @@ class FriendGiftListController {
       final eventName = event['name'] ?? 'an event';
       final giftName = gift['name'] ?? 'a gift';
 
+      // Check owner's notification preference for unpledge
+      final notifyOnUnpledge = await _firestoreService.getNotificationPreference(ownerId);
+      if (!notifyOnUnpledge) {
+        print('Notification for unpledge is disabled for user: $ownerId');
+        return; // Skip sending notification
+      }
+
       // Fetch current user (User2) details from Firestore
       final currentUser = FirebaseAuth.instance.currentUser;
       String unpledgerName = 'A user';
@@ -189,6 +196,7 @@ class FriendGiftListController {
       );
     }
   }
+
 
   // Show gift details in a popup with all the fields
   void showGiftDetails(BuildContext context, Map<String, dynamic> gift) {

@@ -193,6 +193,17 @@ class FirestoreService {
     }
   }
 
+  Future<void> updateNotificationPreference(String userId, bool notifyOnUnpledge) async {
+    await _firestore.collection('users').doc(userId).update({
+      'notifyOnUnpledge': notifyOnUnpledge,
+    });
+  }
+
+  Future<bool> getNotificationPreference(String userId) async {
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    return userDoc.data()?['notifyOnUnpledge'] ?? true; // Default to true
+  }
+
 
   // Add a new gift
   Future<void> addGift(String eventId, Map<String, dynamic> giftData) async {

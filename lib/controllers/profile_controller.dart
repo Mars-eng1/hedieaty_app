@@ -42,6 +42,11 @@ class ProfileController {
     Navigator.pushNamed(context, '/event_list');
   }
 
+  // Navigate to Settings Screen
+  void navigateToSettings(BuildContext context) {
+    Navigator.pushNamed(context, '/settings');
+  }
+
   // Navigate to About Screen
   void navigateToAbout(BuildContext context) {
     Navigator.pushNamed(context, '/about');
