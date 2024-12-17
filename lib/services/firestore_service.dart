@@ -178,6 +178,22 @@ class FirestoreService {
     });
   }
 
+  // Send a notification to a user
+  Future<void> sendNotification(String userId, String title, String message) async {
+    try {
+      await _firestore.collection('notifications').add({
+        'userId': userId,
+        'title': title,
+        'message': message,
+        'isRead': false,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error sending notification: $e');
+    }
+  }
+
+
   // Add a new gift
   Future<void> addGift(String eventId, Map<String, dynamic> giftData) async {
     await _firestore.collection('events').doc(eventId).collection('gifts').add(giftData);
