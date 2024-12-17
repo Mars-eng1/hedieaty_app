@@ -149,7 +149,36 @@ class FriendGiftListController {
   // Cancel a pledge
   Future<void> cancelPledge(BuildContext context, String eventId, String giftId) async {
     try {
+      // Update gift status to 'Available'
       await _firestoreService.updateGift(eventId, giftId, {'status': 'Available'});
+
+      // Fetch gift details for notification
+      final gift = await _firestoreService.getGift(eventId, giftId);
+      if (gift == null) return;
+
+      // Fetch event details to notify the owner
+      final event = await _firestoreService.getEventById(eventId);
+      final ownerId = event['createdBy'];
+      final eventName = event['name'] ?? 'an event';
+      final giftName = gift['name'] ?? 'a gift';
+
+      // Fetch current user (User2) details from Firestore
+      final currentUser = FirebaseAuth.instance.currentUser;
+      String unpledgerName = 'A user';
+      if (currentUser != null) {
+        final userData = await _firestoreService.getUser(currentUser.uid);
+        if (userData != null) {
+          unpledgerName = '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
+        }
+      }
+
+      // Create notification message
+      final message = '$unpledgerName unpledged "$giftName" in "$eventName".';
+
+      // Send notification to User1
+      await _firestoreService.sendNotification(ownerId, 'Gift Unpledged', message);
+
+      // Success feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Pledge canceled successfully')),
       );
