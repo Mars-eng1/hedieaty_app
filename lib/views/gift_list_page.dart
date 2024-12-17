@@ -12,19 +12,25 @@ class GiftListPage extends StatefulWidget {
 
 class _GiftListPageState extends State<GiftListPage> {
   final GiftListController _controller = GiftListController();
+  late String eventId;
+  late String eventName;
+
+  @override
+  void initState() {
+    super.initState();
+    eventId = widget.arguments['eventId'];
+    eventName = widget.arguments['eventName'] ?? 'Event';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final eventId = widget.arguments['eventId'];
-    final eventName = widget.arguments['eventName'] ?? 'Event'; // Default title if eventName is null
-
     return Scaffold(
       appBar: AppBar(
         title: Text('$eventName\'s Gifts'),
         backgroundColor: Colors.pinkAccent,
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _controller.getEventGiftsStream(eventId),
+        stream: _controller.getFilteredGiftsStream(eventId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -85,6 +91,81 @@ class _GiftListPageState extends State<GiftListPage> {
         icon: Icon(Icons.add),
         backgroundColor: Colors.pinkAccent,
       ),
+      drawer: Drawer(
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.pinkAccent),
+              child: Center(
+                child: Text(
+                  'Filters & Sorting',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            ),
+            ListTile(
+              title: Text('Sort by Name'),
+              trailing: Icon(Icons.sort_by_alpha),
+              onTap: () {
+                setState(() {
+                  _controller.sortGiftsByName();
+                });
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text('Sort by Status'),
+              trailing: Icon(Icons.sort),
+              onTap: () {
+                setState(() {
+                  _controller.sortGiftsByStatus();
+                });
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text('Filter by Category'),
+              trailing: Icon(Icons.filter_list),
+              onTap: () => _showCategoryFilter(context),
+            ),
+            ListTile(
+              title: Text('Clear Filters'),
+              trailing: Icon(Icons.clear),
+              onTap: () {
+                setState(() {
+                  _controller.clearFilters();
+                });
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryFilter(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return ListView(
+          children: _controller.categories.map((category) {
+            return ListTile(
+              title: Text(category),
+              onTap: () {
+                setState(() {
+                  _controller.filterGiftsByCategory(category);
+                });
+                Navigator.pop(context);
+              },
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

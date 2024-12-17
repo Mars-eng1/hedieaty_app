@@ -4,9 +4,89 @@ import '../services/firestore_service.dart';
 class GiftListController {
   final FirestoreService _firestoreService = FirestoreService();
 
-  // Get gifts for a specific event (stream)
-  Stream<List<Map<String, dynamic>>> getEventGiftsStream(String eventId) {
-    return _firestoreService.getEventGiftsStream(eventId);
+  // Store all gifts and filtered gifts
+  List<Map<String, dynamic>> allGifts = [];
+  List<Map<String, dynamic>> filteredGifts = [];
+
+  // Categories for filtering
+  final List<String> categories = [
+    'Electronics',
+    'Books',
+    'Fashion',
+    'Home Appliances',
+    'Toys',
+    'Sports',
+    'Gadgets',
+    'Jewelry',
+    'Gift Cards',
+    'Custom Gifts',
+    'Furniture',
+    'Art',
+    'Travel Accessories',
+    'Outdoor Gear',
+    'Others',
+  ];
+
+  // Selected filter/sort options
+  String? selectedCategory;
+  String? selectedSort;
+
+  // Stream of filtered/sorted gifts
+  Stream<List<Map<String, dynamic>>> getFilteredGiftsStream(String eventId) async* {
+    await for (final gifts in _firestoreService.getEventGiftsStream(eventId)) {
+      allGifts = gifts;
+      _applyFiltersAndSort();
+      yield filteredGifts;
+    }
+  }
+
+  // Apply sorting and filtering logic
+  void _applyFiltersAndSort() {
+    filteredGifts = List.from(allGifts);
+
+    // Apply category filter
+    if (selectedCategory != null) {
+      filteredGifts = filteredGifts
+          .where((gift) => gift['category'] == selectedCategory)
+          .toList();
+    }
+
+    // Apply sorting
+    if (selectedSort == 'Name') {
+      filteredGifts.sort((a, b) => a['name'].compareTo(b['name']));
+    } else if (selectedSort == 'Status') {
+      final statusOrder = {'Available': 0, 'Pledged': 1};
+      filteredGifts.sort((a, b) =>
+          (statusOrder[a['status']] ?? 2).compareTo(statusOrder[b['status']] ?? 2));
+    }
+    // Debugging
+    print('Filtered and Sorted Gifts: $filteredGifts');
+
+  }
+
+  // Sort gifts by name
+  void sortGiftsByName() {
+    selectedSort = 'Name';
+    _applyFiltersAndSort();
+  }
+
+  // Sort gifts by status
+  void sortGiftsByStatus() {
+    selectedSort = 'Status';
+    _applyFiltersAndSort();
+  }
+
+  // Filter gifts by category
+  void filterGiftsByCategory(String category) {
+    selectedCategory = category;
+    _applyFiltersAndSort();
+  }
+
+  // Clear all filters and sorts
+  void clearFilters() {
+    selectedCategory = null;
+    selectedSort = null;
+    _applyFiltersAndSort();
   }
 
   // Navigate to the Gift Details page (for creating or editing)
@@ -32,17 +112,16 @@ class GiftListController {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Description: ${gift['description'] ?? 'No description available'}'),
-            const SizedBox(height: 8),
-            Text('Category: ${gift['category'] ?? 'Uncategorized'}'),
-            const SizedBox(height: 8),
-            Text('Link: ${gift['link'] ?? 'No link provided'}'),
-            const SizedBox(height: 8),
-            Text('Price: ${gift['price'] ?? 'N/A'}'),
-            const SizedBox(height: 8),
-            Text('Quantity: ${gift['quantity'] ?? 'N/A'}'),
-            const SizedBox(height: 8),
-            Text('Priority: ${gift['priority'] ?? 'N/A'}'),
+            if (gift['description'] != null)
+              Text('Description: ${gift['description']}'),
+            if (gift['category'] != null)
+              Text('Category: ${gift['category']}'),
+            if (gift['price'] != null)
+              Text('Price: ${gift['price']}'),
+            if (gift['quantity'] != null)
+              Text('Quantity: ${gift['quantity']}'),
+            if (gift['priority'] != null)
+              Text('Priority: ${gift['priority']}'),
           ],
         ),
         actions: [

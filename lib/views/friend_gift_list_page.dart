@@ -12,19 +12,26 @@ class FriendGiftListPage extends StatefulWidget {
 
 class _FriendGiftListPageState extends State<FriendGiftListPage> {
   final FriendGiftListController _controller = FriendGiftListController();
+  late String eventId;
+  late String eventName;
+
+  @override
+  void initState() {
+    super.initState();
+    eventId = widget.arguments['eventId'];
+    eventName = widget.arguments['eventName'] ?? 'Event';
+    _controller.initializeGifts(eventId);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final eventId = widget.arguments['eventId'];
-    final eventName = widget.arguments['eventName'];
-
     return Scaffold(
       appBar: AppBar(
         title: Text('$eventName\'s Gifts'),
         backgroundColor: Colors.pinkAccent,
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _controller.getEventGiftsStream(eventId),
+        stream: _controller.filteredGiftsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -49,34 +56,94 @@ class _FriendGiftListPageState extends State<FriendGiftListPage> {
                 ),
                 child: ListTile(
                   title: Text(gift['name']),
-                  subtitle: Text(gift['category'] ?? 'No category provided'),
+                  subtitle: Text(
+                      '${gift['category'] ?? 'No category'} | ${gift['status']}'),
                   trailing: isAvailable
                       ? ElevatedButton(
-                    onPressed: () =>
-                        _controller.pledgeGift(context, eventId, gift['id']),
-                    child: Text('Available'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  )
+                          onPressed: () => _controller.pledgeGift(
+                              context, eventId, gift['id']),
+                          child: Text('Available'),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green),
+                        )
                       : isPledged
-                      ? ElevatedButton(
-                    onPressed: () => _controller.cancelPledge(
-                        context, eventId, gift['id']),
-                    child: Text('Cancel Pledge'),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red),
-                  )
-                      : ElevatedButton(
-                    onPressed: null,
-                    child: Text('Pledged'),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey),
-                  ),
-                  onTap: () => _controller.showGiftDetails(context, gift), // Updated popup
+                          ? ElevatedButton(
+                              onPressed: () => _controller.cancelPledge(
+                                  context, eventId, gift['id']),
+                              child: Text('Cancel Pledge'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red),
+                            )
+                          : ElevatedButton(
+                              onPressed: null,
+                              child: Text('Pledged'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey),
+                            ),
+                  onTap: () => _controller.showGiftDetails(context, gift),
                 ),
               );
             },
           );
         },
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.pinkAccent, Colors.deepPurpleAccent],
+                ),
+              ),
+              child: Text(
+                'Filter & Sort',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.sort_by_alpha),
+              title: Text('Sort by Name'),
+              onTap: () {
+                _controller.sortGiftsByName();
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.check_circle_outline),
+              title: Text('Sort by Status'),
+              onTap: () {
+                _controller.sortGiftsByStatus();
+                Navigator.pop(context);
+              },
+            ),
+            ExpansionTile(
+              leading: Icon(Icons.filter_list),
+              title: Text('Filter by Category'),
+              children: _controller.getCategories().map((category) {
+                return ListTile(
+                  title: Text(category),
+                  onTap: () {
+                    _controller.filterGiftsByCategory(category);
+                    Navigator.pop(context);
+                  },
+                );
+              }).toList(),
+            ),
+            ListTile(
+              leading: Icon(Icons.clear_all),
+              title: Text('Clear Filters & Sorts'),
+              onTap: () {
+                _controller.clearFiltersAndSorts();
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

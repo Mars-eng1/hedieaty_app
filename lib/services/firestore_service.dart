@@ -163,11 +163,19 @@ class FirestoreService {
         .doc(eventId)
         .collection('gifts')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-      final data = doc.data();
-      data['id'] = doc.id;
-      return data;
-    }).toList());
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+
+        // Ensure all required fields exist
+        data['name'] ??= 'Unnamed Gift';
+        data['status'] ??= 'Available';
+        data['category'] ??= 'Uncategorized';
+
+        return data;
+      }).toList();
+    });
   }
 
   // Add a new gift

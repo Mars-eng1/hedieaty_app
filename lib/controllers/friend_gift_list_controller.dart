@@ -1,12 +1,101 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 
 class FriendGiftListController {
   final FirestoreService _firestoreService = FirestoreService();
 
-  // Get gifts for a specific event (stream)
-  Stream<List<Map<String, dynamic>>> getEventGiftsStream(String eventId) {
-    return _firestoreService.getEventGiftsStream(eventId);
+  List<Map<String, dynamic>> allGifts = []; // Holds all gifts
+  List<Map<String, dynamic>> filteredGifts = []; // Holds sorted/filtered gifts
+  String? selectedCategory;
+  String? selectedSort;
+
+  // Categories for filtering
+  final List<String> categories = [
+    'Electronics',
+    'Books',
+    'Fashion',
+    'Home Appliances',
+    'Toys',
+    'Sports',
+    'Gadgets',
+    'Jewelry',
+    'Gift Cards',
+    'Custom Gifts',
+    'Furniture',
+    'Art',
+    'Travel Accessories',
+    'Outdoor Gear',
+    'Others',
+  ];
+
+  // Stream Controller for filtered gifts
+  final StreamController<List<Map<String, dynamic>>> _controller =
+  StreamController<List<Map<String, dynamic>>>.broadcast();
+
+  Stream<List<Map<String, dynamic>>> get filteredGiftsStream => _controller.stream;
+
+  // Initialize gifts for the event
+  void initializeGifts(String eventId) {
+    _firestoreService.getEventGiftsStream(eventId).listen((gifts) {
+      allGifts = gifts;
+      _applyFiltersAndSort();
+    });
+  }
+
+  // Apply filters and sorting logic
+  void _applyFiltersAndSort() {
+    filteredGifts = List.from(allGifts);
+
+    // Apply category filter
+    if (selectedCategory != null) {
+      filteredGifts = filteredGifts
+          .where((gift) => gift['category'] == selectedCategory)
+          .toList();
+    }
+
+    // Apply sorting
+    if (selectedSort == 'Name') {
+      filteredGifts.sort((a, b) => (a['name'] ?? '').compareTo(b['name'] ?? ''));
+    } else if (selectedSort == 'Status') {
+      final statusOrder = {'Available': 0, 'Pledged': 1};
+      filteredGifts.sort((a, b) =>
+          (statusOrder[a['status']] ?? 2).compareTo(statusOrder[b['status']] ?? 2));
+    }
+
+    // Add filtered and sorted gifts to the stream
+    _controller.add(filteredGifts);
+    print('Filtered and Sorted Gifts: $filteredGifts'); // Debugging
+  }
+
+  // Sort by name
+  void sortGiftsByName() {
+    selectedSort = 'Name';
+    _applyFiltersAndSort();
+  }
+
+  // Sort by status
+  void sortGiftsByStatus() {
+    selectedSort = 'Status';
+    _applyFiltersAndSort();
+  }
+
+  // Filter by category
+  void filterGiftsByCategory(String category) {
+    selectedCategory = category;
+    _applyFiltersAndSort();
+  }
+
+  // Clear all filters and sorts
+  void clearFiltersAndSorts() {
+    selectedCategory = null;
+    selectedSort = null;
+    _applyFiltersAndSort();
+  }
+
+  // Get available categories
+  List<String> getCategories() {
+    return categories;
   }
 
   // Pledge a gift
