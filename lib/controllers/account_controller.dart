@@ -51,15 +51,23 @@ class AccountController {
 
   Future<void> saveUserData(BuildContext context, bool isSetup) async {
     try {
-      await _firestore.collection('users').doc(userId).set({
-        'firstName': firstNameController.text,
-        'lastName': lastNameController.text,
+      final firstName = firstNameController.text.trim();
+      final lastName = lastNameController.text.trim();
+      final updatedData = {
+        'firstName': firstName,
+        'lastName': lastName,
         'dob': dobController.text,
         'gender': gender,
         'email': emailController.text,
         'phoneNumber': phoneNumberController.text,
         'country': country,
-      }, SetOptions(merge: true));
+      };
+
+      // Update the main user document
+      await _firestore.collection('users').doc(userId).set(updatedData, SetOptions(merge: true));
+
+      // Propagate name changes to all friends
+      await _updateFriendsSubcollections(firstName, lastName);
 
       if (isSetup) {
         Navigator.pushReplacementNamed(context, '/home');
@@ -72,6 +80,28 @@ class AccountController {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving user data: $e')),
       );
+    }
+  }
+
+  Future<void> _updateFriendsSubcollections(String firstName, String lastName) async {
+    try {
+      // Fetch all friends of the current user
+      final friendsSnapshot = await _firestore.collection('users').doc(userId).collection('friends').get();
+
+      for (final friendDoc in friendsSnapshot.docs) {
+        final friendId = friendDoc.id;
+
+        // Update the friend's subcollection with the new name
+        await _firestore
+            .collection('users')
+            .doc(friendId)
+            .collection('friends')
+            .doc(userId)
+            .update({'name': '$firstName $lastName'});
+      }
+    } catch (e) {
+      print('Error updating friends subcollection: $e');
+      throw Exception('Failed to propagate name changes to friends.');
     }
   }
 }
