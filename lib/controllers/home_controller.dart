@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,7 +6,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 class HomeController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  //Stream for unread notifications count
+  // Stream controller for filtered friends
+  final StreamController<List<Map<String, dynamic>>> _filteredFriendsController =
+  StreamController<List<Map<String, dynamic>>>.broadcast();
+
+  // Getter for filtered friends stream
+  Stream<List<Map<String, dynamic>>> get filteredFriendsStream =>
+      _filteredFriendsController.stream;
+
+  // Stream for unread notifications count
   Stream<int> getUnreadNotificationCountStream() {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
@@ -41,36 +50,24 @@ class HomeController {
     });
   }
 
-  // Filter friends based on search query
-  List<Map<String, dynamic>> filterFriends(List<Map<String, dynamic>> friends, String query) {
-    if (query.isEmpty) {
-      return friends;
-    }
-
-    return friends
+  // Filter friends based on search query and emit results
+  void searchFriends(List<Map<String, dynamic>> friends, String query) {
+    final filteredFriends = query.isEmpty
+        ? friends
+        : friends
         .where((friend) =>
-    friend['name']?.toLowerCase().contains(query.toLowerCase()) ?? false)
+    friend['name']?.toLowerCase().contains(query.toLowerCase()) ??
+        false)
         .toList();
+    _filteredFriendsController.add(filteredFriends);
   }
 
-  Future<int> getUnreadNotificationCount() async {
-    try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return 0;
-
-      final snapshot = await _firestore
-          .collection('notifications')
-          .where('userId', isEqualTo: currentUser.uid)
-          .where('isRead', isEqualTo: false)
-          .get();
-
-      return snapshot.size;
-    } catch (e) {
-      print('Error fetching unread notifications: $e');
-      return 0;
-    }
+  // Dispose the stream controller
+  void dispose() {
+    _filteredFriendsController.close();
   }
 
+  // Navigation functions
   void navigateToNotifications(BuildContext context) {
     Navigator.pushNamed(context, '/notifications');
   }

@@ -11,6 +11,25 @@ class _HomePageState extends State<HomePage> {
 
   String _searchQuery = '';
 
+  List<Map<String, dynamic>> _allFriends = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen for real-time updates to friends and initialize filtered friends
+    _controller.getFriendsStream().listen((friends) {
+      _allFriends = friends; // Keep original list
+      _controller.searchFriends(_allFriends, _searchQuery); // Apply initial filtering
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose(); // Clean up the stream controller
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,6 +114,7 @@ class _HomePageState extends State<HomePage> {
               onChanged: (query) {
                 setState(() {
                   _searchQuery = query;
+                  _controller.searchFriends(_allFriends, _searchQuery); // Update filtered results
                 });
               },
               decoration: InputDecoration(
@@ -114,7 +134,7 @@ class _HomePageState extends State<HomePage> {
           // Friends List
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: _controller.getFriendsStream(),
+              stream: _controller.filteredFriendsStream, // Use filtered friends stream
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
