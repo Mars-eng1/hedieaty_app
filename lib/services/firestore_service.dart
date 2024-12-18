@@ -206,7 +206,11 @@ class FirestoreService {
 
 
   // Add a new gift
-  Future<void> addGift(String eventId, Map<String, dynamic> giftData) async {
+  // Future<void> addGift(String eventId, Map<String, dynamic> giftData) async {
+  //   await _firestore.collection('events').doc(eventId).collection('gifts').add(giftData);
+  // }
+  Future<void> addGift(String eventId, Map<String, dynamic> giftData, String createdBy) async {
+    giftData['createdBy'] = createdBy; // Add the owner ID to the gift document
     await _firestore.collection('events').doc(eventId).collection('gifts').add(giftData);
   }
 
@@ -224,6 +228,27 @@ class FirestoreService {
   Future<Map<String, dynamic>?> getGift(String eventId, String giftId) async {
     final doc = await _firestore.collection('events').doc(eventId).collection('gifts').doc(giftId).get();
     return doc.exists ? doc.data() : null;
+  }
+
+  // Fetch all gifts for a user across events
+  // Stream to fetch all gifts created by the user
+  Stream<List<Map<String, dynamic>>> getGiftsStreamForUser(String userId) {
+    print('FirestoreService: Fetching gifts for userId = $userId');
+    return _firestore
+        .collectionGroup('gifts')
+        .where('createdBy', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      print('Firestore returned ${snapshot.docs.length} gifts.');
+      for (var doc in snapshot.docs) {
+        print('Gift ID: ${doc.id}, Data: ${doc.data()}');
+      }
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
   }
 
 }

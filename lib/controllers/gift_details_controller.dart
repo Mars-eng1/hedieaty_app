@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 
@@ -68,11 +69,13 @@ class GiftDetailsController {
       'status': 'Available', // Default status
     };
 
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     try {
       if (isEditing && giftId != null) {
         await _firestoreService.updateGift(eventId, giftId, giftData);
       } else {
-        await _firestoreService.addGift(eventId, giftData);
+        await _firestoreService.addGift(eventId, giftData, currentUser!.uid);
       }
       return true;
     } catch (e) {
