@@ -21,7 +21,7 @@ class NotificationPage extends StatelessWidget {
             Text(
               'Notifications',
               style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ],
         ),
@@ -81,6 +81,14 @@ class NotificationPage extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('All notifications marked as read!')),
             );
+          } else if (value == 'clearNotifications') {
+            bool confirmed = await _showConfirmationDialog(context);
+            if (confirmed) {
+              await _controller.clearAllNotifications();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('All notifications cleared!')),
+              );
+            }
           } else if (value == 'settings') {
             _controller.navigateToSettings(context);
           }
@@ -93,6 +101,13 @@ class NotificationPage extends StatelessWidget {
               leading: Icon(Icons.mark_unread_chat_alt_rounded,
                   color: Colors.pinkAccent),
               title: Text('Mark All as Read'),
+            ),
+          ),
+          PopupMenuItem(
+            value: 'clearNotifications',
+            child: ListTile(
+              leading: Icon(Icons.delete_forever, color: Colors.redAccent),
+              title: Text('Clear Notifications'),
             ),
           ),
           PopupMenuItem(
@@ -110,5 +125,26 @@ class NotificationPage extends StatelessWidget {
   String _formatTimestamp(Timestamp timestamp) {
     final dateTime = timestamp.toDate();
     return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+  }
+
+  Future<bool> _showConfirmationDialog(BuildContext context) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Clear Notifications'),
+        content: Text('Are you sure you want to delete all notifications?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Clear', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    ) ??
+        false;
   }
 }

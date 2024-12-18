@@ -20,7 +20,6 @@ class NotificationController {
         .map((snapshot) => snapshot.size);
   }
 
-  // Stream to fetch notifications in real time
   // Stream for real-time notifications
   Stream<List<Map<String, dynamic>>> getNotificationsStream() {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -57,6 +56,25 @@ class NotificationController {
 
     for (final doc in snapshot.docs) {
       batch.update(doc.reference, {'isRead': true});
+    }
+
+    await batch.commit();
+  }
+
+  // Clear all notifications
+  Future<void> clearAllNotifications() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final snapshot = await _firestore
+        .collection('notifications')
+        .where('userId', isEqualTo: currentUser.uid)
+        .get();
+
+    final batch = _firestore.batch();
+
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
     }
 
     await batch.commit();
