@@ -69,7 +69,7 @@ class AddFriendController {
       await currentUserRef.collection('friends').doc(friendId).set({
         'name': friendData['firstName'] + ' ' + (friendData['lastName'] ?? ''),
         'profilePicture': friendData['profilePicture'] ?? '',
-        'upcomingEvents': 0,
+        'upcomingEvents': 0, // Placeholder, will update later
       });
 
       // Add current user to friend's "friends" subcollection
@@ -79,6 +79,41 @@ class AddFriendController {
             (currentUserData['lastName'] ?? ''),
         'profilePicture': currentUserData['profilePicture'] ?? '',
         'upcomingEvents': 0,
+      });
+
+      // Fetch friend's events and calculate their upcoming events count
+      final friendEventsSnapshot = await _firestore
+          .collection('events')
+          .where('createdBy', isEqualTo: friendId)
+          .get();
+
+      int friendUpcomingEventsCount = friendEventsSnapshot.docs.where((eventDoc) {
+        final eventData = eventDoc.data();
+        final eventDate = DateTime.tryParse(eventData['date'] ?? '');
+        return eventDate != null && eventDate.isAfter(DateTime.now());
+      }).length;
+
+      // Fetch current user's events and calculate their upcoming events count
+      final currentUserEventsSnapshot = await _firestore
+          .collection('events')
+          .where('createdBy', isEqualTo: currentUserId)
+          .get();
+
+      int currentUserUpcomingEventsCount =
+          currentUserEventsSnapshot.docs.where((eventDoc) {
+            final eventData = eventDoc.data();
+            final eventDate = DateTime.tryParse(eventData['date'] ?? '');
+            return eventDate != null && eventDate.isAfter(DateTime.now());
+          }).length;
+
+      // Update the "upcomingEvents" count for the friend in the current user's view
+      await currentUserRef.collection('friends').doc(friendId).update({
+        'upcomingEvents': friendUpcomingEventsCount,
+      });
+
+      // Update the "upcomingEvents" count for the current user in the friend's view
+      await friendRef.collection('friends').doc(currentUserId).update({
+        'upcomingEvents': currentUserUpcomingEventsCount,
       });
 
       // Create a notification for the friend
@@ -102,4 +137,6 @@ class AddFriendController {
       );
     }
   }
+
+
 }
