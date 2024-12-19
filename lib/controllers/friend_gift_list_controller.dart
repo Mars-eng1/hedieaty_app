@@ -102,37 +102,36 @@ class FriendGiftListController {
   // Pledge a gift
   // Pledge a gift and notify User1
   Future<void> pledgeGift(BuildContext context, String eventId, String giftId) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User not authenticated!')),
+      );
+      return;
+    }
+
     try {
-      // Update gift status to 'Pledged'
-      await _firestoreService.updateGift(eventId, giftId, {'status': 'Pledged'});
+      // Update the gift's status and pledgedBy field
+      await _firestoreService.updateGift(eventId, giftId, {
+        'status': 'Pledged',
+        'pledgedBy': currentUser.uid,
+      });
 
-      // Fetch gift details for notification
+      // Notify the event owner
       final gift = await _firestoreService.getGift(eventId, giftId);
-      if (gift == null) return;
-
-      // Fetch event details to notify the owner
       final event = await _firestoreService.getEventById(eventId);
       final ownerId = event['createdBy'];
       final eventName = event['name'] ?? 'an event';
-      final giftName = gift['name'] ?? 'a gift';
+      final giftName = gift?['name'] ?? 'a gift';
 
-      // Fetch current user (User2) details from Firestore
-      final currentUser = FirebaseAuth.instance.currentUser;
-      String pledgerName = 'A user';
-      if (currentUser != null) {
-        final userData = await _firestoreService.getUser(currentUser.uid);
-        if (userData != null) {
-          pledgerName = '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
-        }
-      }
+      // Fetch current user's details
+      final userData = await _firestoreService.getUser(currentUser.uid);
+      final pledgerName = '${userData?['firstName'] ?? 'A user'} ${userData?['lastName'] ?? ''}'.trim();
 
-      // Create notification message
       final message = '$pledgerName pledged "$giftName" in "$eventName".';
 
-      // Send notification to User1
       await _firestoreService.sendNotification(ownerId, 'Gift Pledged', message);
 
-      // Success feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gift pledged successfully')),
       );
@@ -148,44 +147,43 @@ class FriendGiftListController {
 
   // Cancel a pledge
   Future<void> cancelPledge(BuildContext context, String eventId, String giftId) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User not authenticated!')),
+      );
+      return;
+    }
+
     try {
-      // Update gift status to 'Available'
-      await _firestoreService.updateGift(eventId, giftId, {'status': 'Available'});
-
-      // Fetch gift details for notification
+      // Only the user who pledged can cancel the pledge
       final gift = await _firestoreService.getGift(eventId, giftId);
-      if (gift == null) return;
+      if (gift?['pledgedBy'] != currentUser.uid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You cannot unpledge this gift')),
+        );
+        return;
+      }
 
-      // Fetch event details to notify the owner
+      // Update the gift's status and clear the pledgedBy field
+      await _firestoreService.updateGift(eventId, giftId, {
+        'status': 'Available',
+        'pledgedBy': null,
+      });
+
+      // Notify the event owner
       final event = await _firestoreService.getEventById(eventId);
       final ownerId = event['createdBy'];
       final eventName = event['name'] ?? 'an event';
-      final giftName = gift['name'] ?? 'a gift';
+      final giftName = gift?['name'] ?? 'a gift';
 
-      // Check owner's notification preference for unpledge
-      final notifyOnUnpledge = await _firestoreService.getNotificationPreference(ownerId);
-      if (!notifyOnUnpledge) {
-        print('Notification for unpledge is disabled for user: $ownerId');
-        return; // Skip sending notification
-      }
+      final userData = await _firestoreService.getUser(currentUser.uid);
+      final unpledgerName = '${userData?['firstName'] ?? 'A user'} ${userData?['lastName'] ?? ''}'.trim();
 
-      // Fetch current user (User2) details from Firestore
-      final currentUser = FirebaseAuth.instance.currentUser;
-      String unpledgerName = 'A user';
-      if (currentUser != null) {
-        final userData = await _firestoreService.getUser(currentUser.uid);
-        if (userData != null) {
-          unpledgerName = '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
-        }
-      }
-
-      // Create notification message
       final message = '$unpledgerName unpledged "$giftName" in "$eventName".';
 
-      // Send notification to User1
       await _firestoreService.sendNotification(ownerId, 'Gift Unpledged', message);
 
-      // Success feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Pledge canceled successfully')),
       );

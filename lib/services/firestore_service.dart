@@ -216,7 +216,12 @@ class FirestoreService {
 
   // Update an existing gift
   Future<void> updateGift(String eventId, String giftId, Map<String, dynamic> giftData) async {
-    await _firestore.collection('events').doc(eventId).collection('gifts').doc(giftId).update(giftData);
+    await _firestore
+        .collection('events')
+        .doc(eventId)
+        .collection('gifts')
+        .doc(giftId)
+        .update(giftData);
   }
 
   // Delete a gift

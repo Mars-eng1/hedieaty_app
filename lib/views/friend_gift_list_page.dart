@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../controllers/friend_gift_list_controller.dart';
 
@@ -66,7 +67,8 @@ class _FriendGiftListPageState extends State<FriendGiftListPage> {
                           style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green),
                         )
-                      : isPledged
+                      : (gift['pledgedBy'] ==
+                              FirebaseAuth.instance.currentUser?.uid)
                           ? ElevatedButton(
                               onPressed: () => _controller.cancelPledge(
                                   context, eventId, gift['id']),
