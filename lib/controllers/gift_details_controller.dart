@@ -58,6 +58,17 @@ class GiftDetailsController {
       return false;
     }
 
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    // Fetch the event to get its name
+    String eventName = 'Unknown Event';
+    try {
+      final event = await _firestoreService.getEventById(eventId);
+      eventName = event['name'] ?? 'Unknown Event';
+    } catch (e) {
+      print('Error fetching event name: $e');
+    }
+
     final giftData = {
       'name': nameController.text,
       'description': descriptionController.text,
@@ -67,9 +78,8 @@ class GiftDetailsController {
       'category': category,
       'priority': priority,
       'status': 'Available', // Default status
+      'eventName': eventName, // Include event name
     };
-
-    final currentUser = FirebaseAuth.instance.currentUser;
 
     try {
       if (isEditing && giftId != null) {
@@ -86,4 +96,5 @@ class GiftDetailsController {
       return false;
     }
   }
+
 }

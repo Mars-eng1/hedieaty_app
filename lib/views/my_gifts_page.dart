@@ -11,6 +11,7 @@ class _MyGiftsPageState extends State<MyGiftsPage> {
   final MyGiftsController _controller = MyGiftsController();
   bool _showAllGifts = true; // Toggle for All Gifts or Pledged Gifts
   late String userId;
+  String _searchQuery = ''; // For search functionality
 
   @override
   void initState() {
@@ -48,7 +49,32 @@ class _MyGiftsPageState extends State<MyGiftsPage> {
           ),
         ],
       ),
-      body: _buildGiftsStream(),
+      body: Column(
+        children: [
+          // Search bar for filtering gifts by name
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              onChanged: (query) {
+                setState(() {
+                  _searchQuery = query.trim().toLowerCase();
+                });
+              },
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.search, color: Colors.grey),
+                hintText: 'Search gifts by name...',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: _buildGiftsStream()),
+        ],
+      ),
     );
   }
 
@@ -67,8 +93,12 @@ class _MyGiftsPageState extends State<MyGiftsPage> {
           return Center(child: Text('No gifts found.'));
         }
 
-        final gifts = snapshot.data!;
-        print('Loaded ${gifts.length} gifts');
+        // Filter gifts by search query
+        final gifts = snapshot.data!
+            .where((gift) =>
+            gift['name'].toString().toLowerCase().contains(_searchQuery))
+            .toList();
+        print('Filtered gifts count: ${gifts.length}');
 
         return ListView.builder(
           itemCount: gifts.length,
@@ -78,8 +108,14 @@ class _MyGiftsPageState extends State<MyGiftsPage> {
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: ListTile(
                 title: Text(gift['name'] ?? 'Unnamed Gift'),
-                subtitle: Text(
-                  'Category: ${gift['category'] ?? 'N/A'}\nStatus: ${gift['status']}',
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Event: ${gift['eventName']}'),
+                    Text('Status: ${gift['status']}'),
+                    if (gift['status'] == 'Pledged')
+                      Text('Pledged by: ${gift['pledgedBy']}'),
+                  ],
                 ),
                 trailing: Icon(
                   gift['status'] == 'Pledged'

@@ -94,11 +94,18 @@ class FirestoreService {
   }
 
   // Delete an event
+  // Delete an event and its associated gifts
   Future<void> deleteEvent(String eventId) async {
     try {
+      // First, delete all gifts in the event
+      await deleteAllGiftsInEvent(eventId);
+
+      // Then, delete the event itself
       await _firestore.collection('events').doc(eventId).delete();
+      print('Event $eventId has been deleted.');
     } catch (e) {
-      throw Exception('Error deleting event: $e');
+      print('Error deleting event $eventId: $e');
+      throw Exception('Failed to delete event.');
     }
   }
 
@@ -229,6 +236,24 @@ class FirestoreService {
     await _firestore.collection('events').doc(eventId).collection('gifts').doc(giftId).delete();
   }
 
+  // Delete all gifts in an event
+  Future<void> deleteAllGiftsInEvent(String eventId) async {
+    try {
+      final giftsCollection = _firestore.collection('events').doc(eventId).collection('gifts');
+      final snapshot = await giftsCollection.get();
+
+      final batch = _firestore.batch();
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      print('All gifts in event $eventId have been deleted.');
+    } catch (e) {
+      print('Error deleting gifts for event $eventId: $e');
+      throw Exception('Failed to delete gifts in the event.');
+    }
+  }
+
   // Fetch a single gift
   Future<Map<String, dynamic>?> getGift(String eventId, String giftId) async {
     final doc = await _firestore.collection('events').doc(eventId).collection('gifts').doc(giftId).get();
@@ -243,17 +268,42 @@ class FirestoreService {
         .collectionGroup('gifts')
         .where('createdBy', isEqualTo: userId)
         .snapshots()
-        .map((snapshot) {
+        .asyncMap((snapshot) async {
       print('Firestore returned ${snapshot.docs.length} gifts.');
-      for (var doc in snapshot.docs) {
-        print('Gift ID: ${doc.id}, Data: ${doc.data()}');
-      }
-      return snapshot.docs.map((doc) {
+
+      // Process each gift to enrich data with eventName and pledgedBy details
+      final enrichedGifts = await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
         data['id'] = doc.id;
+
+        // Ensure eventName is resolved
+        if (!data.containsKey('eventName') || data['eventName'] == 'Unknown Event') {
+          try {
+            final event = await _firestore.collection('events').doc(doc.reference.parent.parent?.id).get();
+            data['eventName'] = event.data()?['name'] ?? 'Unknown Event';
+          } catch (e) {
+            print('Error fetching event name: $e');
+            data['eventName'] = 'Unknown Event';
+          }
+        }
+
+        // Ensure pledgedBy is resolved to the user's name if it exists
+        if (data['pledgedBy'] != null && data['pledgedBy'] != 'N/A') {
+          try {
+            final userDoc = await _firestore.collection('users').doc(data['pledgedBy']).get();
+            data['pledgedBy'] = '${userDoc.data()?['firstName'] ?? 'Unknown'} ${userDoc.data()?['lastName'] ?? ''}'.trim();
+          } catch (e) {
+            print('Error fetching pledgedBy user name: $e');
+            data['pledgedBy'] = 'Unknown User';
+          }
+        }
+
         return data;
-      }).toList();
+      }).toList());
+
+      return enrichedGifts;
     });
   }
+
 
 }
