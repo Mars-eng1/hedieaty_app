@@ -3,6 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../views/add_friend_page.dart';
+import '../views/event_details_page.dart';
+import '../views/event_list_page.dart';
+import '../views/friend_events_page.dart';
+import '../views/notification_page.dart';
+import '../views/profile_page.dart';
+
 class HomeController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -69,30 +76,56 @@ class HomeController {
 
   // Navigation functions
   void navigateToNotifications(BuildContext context) {
-    Navigator.pushNamed(context, '/notifications');
+    _navigateWithAnimation(context, NotificationPage());
   }
 
   void navigateToEventList(BuildContext context) {
-    Navigator.pushNamed(context, '/event_list');
+    _navigateWithAnimation(context, EventListPage());
   }
 
   void navigateToCreateNewEvent(BuildContext context) {
-    Navigator.pushNamed(context, '/event_details');
+    _navigateWithAnimation(context, EventDetailsPage(arguments: {}));
   }
 
   void navigateToProfile(BuildContext context) {
-    Navigator.pushNamed(context, '/profile');
+    _navigateWithAnimation(context, ProfilePage());
   }
 
   void navigateToFriendEvents(BuildContext context, String friendId, String friendName) {
-    Navigator.pushNamed(
+    _navigateWithAnimation(
       context,
-      '/friend_events',
-      arguments: {'friendId': friendId, 'friendName': friendName},
+      FriendEventsPage(arguments: {'friendId': friendId, 'friendName': friendName}),
     );
   }
 
   void navigateToAddFriend(BuildContext context) {
-    Navigator.pushNamed(context, '/add_friend');
+    _navigateWithAnimation(context, AddFriendPage());
   }
+
+
+
+  void _navigateWithAnimation(BuildContext context, Widget page) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0); // Slide from the right
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          var offsetAnimation = animation.drive(tween);
+
+          return SlideTransition(
+            position: offsetAnimation,
+            child: child,
+          );
+        },
+      ),
+    );
+  }
+
+
+
 }
