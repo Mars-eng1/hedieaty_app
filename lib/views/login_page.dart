@@ -48,6 +48,7 @@ class LoginPage extends StatelessWidget {
                         children: [
                           // Email Field
                           TextFormField(
+                            key: Key('emailField'),
                             controller: _emailController,
                             decoration: InputDecoration(
                               labelText: 'Email',
@@ -62,6 +63,7 @@ class LoginPage extends StatelessWidget {
                           const SizedBox(height: 16),
                           // Password Field
                           TextFormField(
+                            key: Key('passwordField'),
                             controller: _passwordController,
                             decoration: InputDecoration(
                               labelText: 'Password',

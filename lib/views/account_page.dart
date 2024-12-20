@@ -54,6 +54,7 @@ class _AccountPageState extends State<AccountPage> {
             children: [
               // First Name
               TextFormField(
+                key: Key('firstNameField'),
                 controller: _controller.firstNameController,
                 decoration: InputDecoration(
                   labelText: 'First Name',
@@ -71,6 +72,7 @@ class _AccountPageState extends State<AccountPage> {
 
               // Last Name
               TextFormField(
+                key: Key('lastNameField'),
                 controller: _controller.lastNameController,
                 decoration: InputDecoration(
                   labelText: 'Last Name',
@@ -88,6 +90,7 @@ class _AccountPageState extends State<AccountPage> {
 
               // Date of Birth
               TextFormField(
+                key: Key('dobField'),
                 controller: _controller.dobController,
                 decoration: InputDecoration(
                   labelText: 'Date of Birth',
@@ -104,6 +107,7 @@ class _AccountPageState extends State<AccountPage> {
 
               // Gender
               DropdownButtonFormField<String>(
+                key: Key('genderDropdown'),
                 value: _controller.gender,
                 decoration: InputDecoration(
                   labelText: 'Gender',
@@ -142,6 +146,7 @@ class _AccountPageState extends State<AccountPage> {
 
               // Phone Number
               TextFormField(
+                key: Key('phoneField'),
                 controller: _controller.phoneNumberController,
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
@@ -157,6 +162,7 @@ class _AccountPageState extends State<AccountPage> {
 
               // Country/Region
               DropdownButtonFormField<String>(
+                key: Key('countryDropdown'),
                 value: _controller.country,
                 decoration: InputDecoration(
                   labelText: 'Country/Region',
@@ -180,6 +186,7 @@ class _AccountPageState extends State<AccountPage> {
 
               // Save Button
               ElevatedButton(
+                key: Key('completeProfileButton'),
                 onPressed: () {
                   if (_controller.formKey.currentState!.validate()) {
                     _controller.saveUserData(context, isSetup);

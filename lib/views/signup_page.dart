@@ -48,6 +48,7 @@ class SignupPage extends StatelessWidget {
                         children: [
                           // Email Field
                           TextFormField(
+                            key: Key('emailField'),
                             controller: _emailController,
                             decoration: InputDecoration(
                               labelText: 'Email',
@@ -62,6 +63,7 @@ class SignupPage extends StatelessWidget {
                           const SizedBox(height: 16),
                           // Password Field
                           TextFormField(
+                            key: Key('passwordField'),
                             controller: _passwordController,
                             decoration: InputDecoration(
                               labelText: 'Password',
@@ -78,6 +80,7 @@ class SignupPage extends StatelessWidget {
                           const SizedBox(height: 16),
                           // Signup Button
                           ElevatedButton(
+                            key: Key('signupButton'),
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
                                 _controller.signup(
