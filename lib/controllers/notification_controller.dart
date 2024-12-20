@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+
 class NotificationController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -38,6 +39,30 @@ class NotificationController {
         data['id'] = doc.id; // Include notification ID
         return data;
       }).toList();
+    });
+  }
+
+  // Real-time stream for new notifications
+  Stream<Map<String, dynamic>> getNewNotificationStream() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return const Stream.empty();
+    }
+
+    return _firestore
+        .collection('notifications')
+        .where('userId', isEqualTo: currentUser.uid)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final latest = snapshot.docs.first;
+        return {
+          ...latest.data(),
+          'id': latest.id,
+        };
+      }
+      return {};
     });
   }
 
@@ -79,6 +104,20 @@ class NotificationController {
 
     await batch.commit();
   }
+
+  // void showFloatingNotification(BuildContext context, String title, String message) {
+  //   OverlayEntry overlayEntry = OverlayEntry(
+  //     builder: (context) => FloatingNotification(title: title, message: message),
+  //   );
+  //
+  //   // Insert the overlay
+  //   Overlay.of(context).insert(overlayEntry);
+  //
+  //   // Automatically remove the notification after 3 seconds
+  //   Future.delayed(Duration(seconds: 3), () {
+  //     overlayEntry.remove();
+  //   });
+  // }
 
   void navigateToSettings(BuildContext context) {
     Navigator.pushNamed(context, '/settings');

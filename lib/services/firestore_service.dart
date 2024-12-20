@@ -22,6 +22,52 @@ class FirestoreService {
     }
   }
 
+  // Helper function to check if two dates are the same day
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
+  // Add or Update an event
+  Future<void> saveEvent(String eventId, Map<String, dynamic> eventData) async {
+    try {
+      if (eventId.isEmpty) {
+        await _firestore.collection('events').add(eventData);
+      } else {
+        await _firestore.collection('events').doc(eventId).set(eventData);
+      }
+    } catch (e) {
+      throw Exception('Error saving event: $e');
+    }
+  }
+
+  // Real-time stream of friends' events
+  Stream<List<Map<String, dynamic>>> getFriendsEventsStream(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('friends')
+        .snapshots()
+        .asyncMap((friendSnapshots) async {
+      final List<Map<String, dynamic>> events = [];
+      for (final friend in friendSnapshots.docs) {
+        final friendId = friend.id;
+        final friendEvents = await _firestore
+            .collection('events')
+            .where('createdBy', isEqualTo: friendId)
+            .get();
+
+        events.addAll(friendEvents.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return data;
+        }));
+      }
+      return events;
+    });
+  }
+
   // Real-time stream of user events
   Stream<List<Map<String, dynamic>>> getUserEventsStream(String userId) {
     return _firestore
@@ -53,48 +99,12 @@ class FirestoreService {
     }).toList());
   }
 
-  //Add a Helper to Fetch Event by ID
+  // Helper to Fetch Event by ID
   Future<Map<String, dynamic>> getEventById(String eventId) async {
     final docSnapshot = await _firestore.collection('events').doc(eventId).get();
     return docSnapshot.data() ?? {};
   }
 
-// Helper function to check if two dates are the same day
-  bool _isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year &&
-        date1.month == date2.month &&
-        date1.day == date2.day;
-  }
-
-
-  // Real-time stream of friends' events
-  // Stream for friend's events (already implemented correctly)
-  Stream<List<Map<String, dynamic>>> getFriendsEventsStream(String userId) {
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('friends')
-        .snapshots()
-        .asyncMap((friendSnapshots) async {
-      final List<Map<String, dynamic>> events = [];
-      for (final friend in friendSnapshots.docs) {
-        final friendId = friend.id;
-        final friendEvents = await _firestore
-            .collection('events')
-            .where('createdBy', isEqualTo: friendId)
-            .get();
-
-        events.addAll(friendEvents.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return data;
-        }));
-      }
-      return events;
-    });
-  }
-
-  // Delete an event
   // Delete an event and its associated gifts
   Future<void> deleteEvent(String eventId) async {
     try {
@@ -110,16 +120,15 @@ class FirestoreService {
     }
   }
 
-  // Add or Update an event
-  Future<void> saveEvent(String eventId, Map<String, dynamic> eventData) async {
+  // Save or update user data
+  Future<void> saveUser(String userId, Map<String, dynamic> userData) async {
     try {
-      if (eventId.isEmpty) {
-        await _firestore.collection('events').add(eventData);
-      } else {
-        await _firestore.collection('events').doc(eventId).set(eventData);
-      }
+      await _firestore.collection('users').doc(userId).set(
+        userData,
+        SetOptions(merge: true),
+      );
     } catch (e) {
-      throw Exception('Error saving event: $e');
+      throw Exception('Error saving user data: $e');
     }
   }
 
@@ -130,18 +139,6 @@ class FirestoreService {
       return userDoc.exists ? userDoc.data() : null;
     } catch (e) {
       throw Exception('Error fetching user data: $e');
-    }
-  }
-
-  // Save or update user data
-  Future<void> saveUser(String userId, Map<String, dynamic> userData) async {
-    try {
-      await _firestore.collection('users').doc(userId).set(
-            userData,
-            SetOptions(merge: true),
-          );
-    } catch (e) {
-      throw Exception('Error saving user data: $e');
     }
   }
 
@@ -212,11 +209,7 @@ class FirestoreService {
     return userDoc.data()?['notifyOnUnpledge'] ?? true; // Default to true
   }
 
-
   // Add a new gift
-  // Future<void> addGift(String eventId, Map<String, dynamic> giftData) async {
-  //   await _firestore.collection('events').doc(eventId).collection('gifts').add(giftData);
-  // }
   Future<void> addGift(String eventId, Map<String, dynamic> giftData, String createdBy) async {
     giftData['createdBy'] = createdBy; // Add the owner ID to the gift document
     await _firestore.collection('events').doc(eventId).collection('gifts').add(giftData);
@@ -261,7 +254,6 @@ class FirestoreService {
     return doc.exists ? doc.data() : null;
   }
 
-  // Fetch all gifts for a user across events
   // Stream to fetch all gifts created by the user
   Stream<List<Map<String, dynamic>>> getGiftsStreamForUser(String userId) {
     print('FirestoreService: Fetching gifts for userId = $userId');
@@ -375,7 +367,6 @@ class FirestoreService {
       throw Exception('Failed to reset pledges.');
     }
   }
-
 
   Future<void> resetPledgedGifts(String friendId) async {
     final giftsSnapshot = await _firestore

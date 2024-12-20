@@ -18,6 +18,8 @@ import 'views/home_page.dart';
 import 'views/event_list_page.dart';
 import 'views/event_details_page.dart';
 import 'views/gift_list_page.dart';
+import 'widgets/notification_listener_widget.dart';
+import 'package:overlay_support/overlay_support.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,13 +30,18 @@ void main() async {
 class HedieatyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return OverlaySupport.global(
+        child: MaterialApp(
         title: 'Hedieaty',
         theme: ThemeData(
           primarySwatch: Colors.purple,
           scaffoldBackgroundColor: Colors.grey[100],
         ),
         initialRoute: '/',
+        builder: (context, child) {
+          // Wrap the app's main content in NotificationListenerWidget
+          return NotificationListenerWidget(child: child ?? Container());
+        },
         routes: {
           '/': (context) => WelcomePage(),
           '/login': (context) => LoginPage(),
@@ -76,6 +83,7 @@ class HedieatyApp extends StatelessWidget {
                 {};
             return GiftDetailsPage(arguments: args);
           },
-        });
+        }
+        ));
   }
 }
