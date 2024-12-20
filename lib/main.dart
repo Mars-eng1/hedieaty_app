@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'views/about_page.dart';
+import 'views/friends_page.dart';
 import 'views/account_page.dart';
 import 'views/add_friend_page.dart';
 import 'views/friend_events_page.dart';
@@ -53,6 +54,7 @@ class HedieatyApp extends StatelessWidget {
                 as Map<String, dynamic>;
             return AccountPage(arguments: args);
           },
+          '/my_friends': (context) => FriendsPage(),
           '/my_gifts': (context) => MyGiftsPage(),
           '/settings': (context) => SettingsPage(),
           '/about': (context) => AboutPage(),

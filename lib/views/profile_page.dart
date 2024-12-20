@@ -54,6 +54,12 @@ class ProfilePage extends StatelessWidget {
                 ),
                 _buildCard(
                   context,
+                  title: 'My Friends',
+                  icon: Icons.supervised_user_circle_sharp,
+                  onTap: () => _controller.navigateToMyFriends(context),
+                ),
+                _buildCard(
+                  context,
                   title: 'Settings',
                   icon: Icons.settings,
                   onTap: () => _controller.navigateToSettings(context),

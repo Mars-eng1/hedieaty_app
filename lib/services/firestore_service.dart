@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -305,5 +306,93 @@ class FirestoreService {
     });
   }
 
+  Future<void> removeFriend(String friendId) async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUserId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final batch = _firestore.batch();
+
+    try {
+      // Remove friend relationship for both users
+      final currentUserRef = _firestore
+          .collection('users')
+          .doc(currentUserId)
+          .collection('friends')
+          .doc(friendId);
+
+      final friendRef = _firestore
+          .collection('users')
+          .doc(friendId)
+          .collection('friends')
+          .doc(currentUserId);
+
+      batch.delete(currentUserRef);
+      batch.delete(friendRef);
+
+      // Reset pledges for gifts the current user pledged to the friend
+      await resetPledgesForUnfriendedUser(currentUserId, friendId);
+
+      // Reset pledges for gifts the friend pledged to the current user
+      await resetPledgesForUnfriendedUser(friendId, currentUserId);
+
+      await batch.commit();
+      print('Friendship and pledges successfully removed.');
+    } catch (e) {
+      print('Error removing friend: $e');
+      throw Exception('Failed to remove friend.');
+    }
+  }
+
+  Future<void> resetPledgesForUnfriendedUser(String unfriendedUserId, String currentUserId) async {
+    try {
+      final giftsSnapshot = await _firestore.collectionGroup('gifts')
+          .where('pledgedBy', isEqualTo: unfriendedUserId)
+          .get();
+
+      final batch = _firestore.batch();
+
+      for (var giftDoc in giftsSnapshot.docs) {
+        final eventRef = giftDoc.reference.parent.parent;
+        if (eventRef != null) {
+          final eventOwner = (await eventRef.get()).data()?['createdBy'];
+
+          if (eventOwner == currentUserId) {
+            batch.update(giftDoc.reference, {
+              'status': 'Available',
+              'pledgedBy': null,
+            });
+          }
+        }
+      }
+
+      await batch.commit();
+      print('Pledges reset successfully for unfriended user $unfriendedUserId.');
+    } catch (e) {
+      print('Error resetting pledges: $e');
+      throw Exception('Failed to reset pledges.');
+    }
+  }
+
+
+  Future<void> resetPledgedGifts(String friendId) async {
+    final giftsSnapshot = await _firestore
+        .collectionGroup('gifts')
+        .where('pledgedBy', isEqualTo: friendId)
+        .get();
+
+    final batch = _firestore.batch();
+
+    for (var doc in giftsSnapshot.docs) {
+      batch.update(doc.reference, {
+        'status': 'Available',
+        'pledgedBy': null,
+      });
+    }
+
+    await batch.commit();
+  }
 
 }

@@ -104,6 +104,7 @@ class _MyGiftsPageState extends State<MyGiftsPage> {
           itemCount: gifts.length,
           itemBuilder: (context, index) {
             final gift = gifts[index];
+            final isPledged = gift['status'] == 'Pledged';
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               child: ListTile(
@@ -113,17 +114,13 @@ class _MyGiftsPageState extends State<MyGiftsPage> {
                   children: [
                     Text('Event: ${gift['eventName']}'),
                     Text('Status: ${gift['status']}'),
-                    if (gift['status'] == 'Pledged')
-                      Text('Pledged by: ${gift['pledgedBy']}'),
+                    if (isPledged)
+                      Text('Pledged by: ${gift['pledgedBy'] ?? 'Unknown'}'),
                   ],
                 ),
                 trailing: Icon(
-                  gift['status'] == 'Pledged'
-                      ? Icons.lock
-                      : Icons.card_giftcard,
-                  color: gift['status'] == 'Pledged'
-                      ? Colors.redAccent
-                      : Colors.green,
+                  isPledged ? Icons.lock : Icons.card_giftcard,
+                  color: isPledged ? Colors.redAccent : Colors.green,
                 ),
               ),
             );
